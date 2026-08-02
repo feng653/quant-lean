@@ -30,9 +30,9 @@ jobs:
       - name: Run OpenCode agent
         uses: anomalyco/opencode/github@latest
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         with:
-          model: ${{ vars.AGENT_MODEL || 'anthropic/claude-sonnet-4-20250514' }}
+          model: ${{ vars.AGENT_MODEL || 'deepseek/deepseek-v4-flash' }}
           agent: req-executor
           # 契约快照守则：行为不变任务禁止改 backend/tests/snapshots/；
           # 行为变化任务必须显式更新并在 PR 列出变更清单，等用户 Approve。
