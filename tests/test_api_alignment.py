@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi.testclient import TestClient
 from backend.config import settings
 from backend.data.lineage import build_universe_snapshot
+from backend.version import APP_VERSION
 
 app = None
 client = None
@@ -436,7 +437,7 @@ class TestHealth:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "ok"
-        assert data["version"] == "0.1.1"
+        assert data["version"] == APP_VERSION
         assert data["commit"] == "unknown" or re.fullmatch(
             r"[0-9a-f]{40}",
             data["commit"],
@@ -718,7 +719,7 @@ class TestDataAPI:
         )
         assert resp.status_code == 200
         data = resp.json()["data"]
-        assert data["schema_version"] == "experiment-readiness/v2"
+        assert data["schema_version"] == "experiment-readiness/v4"
         assert data["data_access_policy"] == "pit_cache_only"
         assert data["network_accessed"] is False
         assert data["writes_performed"] is False
