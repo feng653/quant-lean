@@ -14,6 +14,7 @@ triggering issue itself, which is the one being evaluated).
 Exit 0 = allowed to start. Exit 1 = blocked (comment posted, `agent` label
 removed so the task returns to queued state).
 """
+from __future__ import annotations
 
 import json
 import os
