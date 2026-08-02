@@ -27,6 +27,13 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Parallel eligibility guard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python .github/scripts/check_parallel.py
+
       - name: Run OpenCode agent
         uses: anomalyco/opencode/github@latest
         env:
