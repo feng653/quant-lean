@@ -1,6 +1,9 @@
-# 量化验证平台 (Quant Platform)
+# 量化验证平台 (Quant Lean)
 
-FastAPI + React monorepo for quantitative strategy backtesting, parameter sweeping, paper trading, and AI-driven analysis.
+FastAPI + React monorepo for personal quantitative strategy backtesting and paper trading.
+本仓库是重构后的"精简版"（从冻结仓库 `feng653/quant-platform` 迁移）。**宪法文档必须先读**：
+`docs/PROJECT_PHILOSOPHY.md`（七条宪法）、`docs/ARCHITECTURE_LEAN.md`（北极星架构）、
+`docs/VERSIONING.md`（版本号与线路）、`docs/WORKFLOW_AUTOMATION.md`（全自动工作流）。
 
 ## Quick commands
 
@@ -34,22 +37,51 @@ pytest tests/integration/ -v --tb=short --timeout=180
 cd frontend && npm run lint && npm run test && npm run build
 ```
 
-**CI gate order**: lint → build (frontend: `tsc -b && vite build`) → unit tests → integration tests.
+**CI gate order**: lint → build → unit tests → integration tests → contract snapshot diff.
+
+## 工作流总宪法（opencode 与 codex 共同遵守）
+
+### 任务模型
+
+- **一个 issue = 一个需求 = 一个版本方向**。用户开 issue，标题带版本号（如 `[v0.4.0] main.py 抽层`）。
+- **只有带 `agent` 标签的 issue 才允许被 agent 处理**（保证版本按序执行、并行安全）。
+- 版本顺序：v0.3.0 契约锁定 → v0.4.0 抽层 → v0.5.0 去重 → v0.6.0 删除 → v0.7.0 数据收敛 → v0.8.0 行为简化（见 `docs/VERSIONING.md`）。
+
+### 全自动流水线（GitHub 原生）
+
+- 在 GitHub Actions 里工作时（`opencode/github@latest`）：读 issue → 分析 → 开分支 → 实现 → 跑测试 → 开 PR。
+- 本地会话工作时：先读 `docs/todo/TODO_INDEX.md` 确认版本状态，只做当前版本方向内的改动。
+- **契约快照守则**：
+  - 行为不变的重构：快照必须零 diff（`backend/tests/snapshots/` 不得改动）。
+  - 行为变化（改端点/响应/数据结构）：必须显式更新快照，并在 PR 描述列出变更清单，等用户 Approve。
+  - 禁止静默更新快照来掩盖行为变化。
+
+### 并行与合并
+
+- 每个 agent 在独立分支工作；合入 master 走 Merge Queue（GitHub 自动串行化）。
+- 冲突时：后到者 rebase 最新 master，读两边代码解决，重跑 CI。
+- 语义冲突由契约快照 diff 暴露；用户是行为变化的最终确认人。
+
+### 线路
+
+- master = 开发线（只收 CI 绿合并，永远可跑）；tag = 稳定线（只从 tag 部署）。
+- 已发布版本出问题：`hotfix/v0.x.y-xxx` 从 tag 切出 → 修 → 合回 master → 打补丁 tag。
 
 ## Architecture
 
 | Directory | Purpose |
 |-----------|---------|
-| `backend/` | FastAPI app (Python 3.11). Entry: `backend/main.py`. Config: `backend/config.py` (pydantic-settings) |
+| `backend/` | FastAPI app (Python 3.11). Entry: `backend/main.py`. Config: `backend/config.py` |
 | `frontend/` | React 19 + TypeScript + Vite + Tailwind CSS + Zustand |
 | `data/` | Runtime SQLite DBs + Parquet cache + trained models |
 
-**Three SQLite databases** (all auto-created by `backend/main.py` on startup):
+北极星目标架构见 `docs/ARCHITECTURE_LEAN.md`（backend <40k 行、main.py <300 行、~60 端点、
+单一事实源：一套价格存储、一份哈希、一份时间函数）。
+
+**Three SQLite databases** (auto-created by `backend/main.py` on startup):
 - `data/users.db` — auth, users, permissions
 - `data/experiment.db` — experiments, results, param sweeps
 - `data/trading_sim.db` — paper trading, portfolios, orders
-
-**API docs** at `http://localhost:8000/docs` (Swagger). Full reference: `docs/API.md`.
 
 ## Config and env
 
@@ -60,105 +92,32 @@ JWT_SECRET=your-secret-key-change-me
 DEEPSEEK_API_KEY=sk-xxxxxxxx   # optional, AI features disabled if missing
 ```
 
-All config lives in `backend/config.py` → `Settings`. Paths are relative to `PROJECT_ROOT` (the repo root). Do not change `PROJECT_ROOT` or `DATABASE_DIR` unless you move the `backend/` package.
+All config lives in `backend/config.py` → `Settings`. Paths relative to `PROJECT_ROOT`.
+**Do not change `PROJECT_ROOT` or `DATABASE_DIR`.**
 
 ## Strategy system
 
-Strategies live in `backend/strategies/` subdirectories (`technical/`, `ml/`, `factor/`, `portfolio/`, `composite/`).
-
-- All strategies implement `StrategyProtocol` (`backend/strategies/base.py`)
-- **Auto-registration**: `Registry.scan()` discovers all modules recursively. No manual registration needed.
-- **Trainable strategies** (ML models with periodic retraining): extend `TrainableStrategy` (`base.py`) and implement `prepare()`/`fit()`/`predict_scores()` only. The platform driver `backend/services/walkforward.py` owns the monthly walk-forward loop — schedule, train-window computation, progress reporting, cancellation, and failure propagation (3 consecutive fit failures raise with the real root cause; never silently return empty signals). `retrain_frequency=NEVER` means train-once on `_train_start/_train_end`. Do NOT write a private walk-forward loop inside `generate_batch_signals`.
-- **Native DLL load order (Windows)**: `lightgbm` MUST be imported at module top BEFORE any pandas/pyarrow import. If pyarrow's native DLLs load first, every LightGBM Dataset call crashes with `OSError: exception: access violation reading 0x0000000000000000` (this was the root cause of experiment 102's failure). See the guarded preload at the top of `backend/strategies/ml/alpha158_lgb.py`.
-- **Composite strategies** include equal-weight, risk-parity, momentum and regime variants. Their default children are rule-based strategies; validation rejects unknown IDs, duplicates, self-reference and nested composites.
-- **Stock pool IDs**: `csi300`, `csi500`, `csi800`, `csi1000`, `all_a` (NOT `hs300`/`zz500` — old names cause "Data not found").
-- New strategy? Add a module in the correct subdirectory + ensure `get_metadata()` returns proper pool/compatible fields.
+- Strategies implement `StrategyProtocol` (`backend/strategies/base.py`); auto-registered via `Registry.scan()`.
+- Trainable strategies extend `TrainableStrategy`; the walk-forward loop is owned by `backend/services/walkforward.py`. Do NOT write a private walk-forward loop inside `generate_batch_signals`.
+- **Native DLL load order (Windows)**: `lightgbm` MUST be imported at module top BEFORE pandas/pyarrow. See guarded preload at top of `backend/strategies/ml/alpha158_lgb.py`.
+- Stock pool IDs: `csi300`, `csi500`, `csi800`, `csi1000`, `all_a` (NOT `hs300`/`zz500`).
 
 ## Auth and RBAC
 
-- JWT auth (`python-jose` + bcrypt via `passlib`). Token expiry: 24h (`JWT_EXPIRE_MINUTES`).
-- In development, the first registered user becomes admin. In production, the first registration also requires `X-Bootstrap-Token` matching `BOOTSTRAP_ADMIN_TOKEN`; all other users receive read-only permissions.
-- Admin can grant permissions at `/admin`. 14 granular permissions covering experiments, trading, data, strategies, AI, and admin.
-- **Route order matters in `main.py`**: catch-all `/api/{path}` routes must be registered AFTER specific routes.
-
-## Agent workflow conventions
-
-The default agent is **tech-lead** (see `.opencode/agents/tech-lead.md`, `docs/TECH_LEAD.md`):
-
-- **Two-phase**: Clarify requirements first (output PRD, get confirmation) → then design + delegate + integrate.
-- **Task-owned worktrees**: Follow `docs/WORKTREE_WORKFLOW.md`. Read-only work may use the
-  primary tree; every repository-writing task must receive a manager-created task ID,
-  absolute worktree path, branch, and base commit before the first edit.
-- **Fail closed**: A writing agent without an assigned task worktree must refuse to edit.
-  The lead creates and assigns worktrees; workers never reuse another agent's worktree.
-- **Primary-tree boundary**: `master` is for lead-agent review, integration, and final
-  verification only. Never develop, stash, reset, clean, or force-remove work there.
-- **Never skip verification**: After sub-agents finish, run the backend, call the affected API, check the frontend.
-- **Trunk-based**: `master` is the only long-lived branch. Agent work uses manager-created
-  short-lived `codex/<task>-<agent>-<shortid>` branches.
-- **Versioned planning records**: [`docs/ROADMAP.md`](docs/ROADMAP.md) is the version-level
-  strategic plan. [`docs/todo/TODO_INDEX.md`](docs/todo/TODO_INDEX.md) is the only operational
-  entry point: one dated code TODO per focused small version plus a separate non-code experiment
-  operations TODO. `docs/EXECUTION_TODO.md` is compatibility-only and must not become a second
-  board. Read the index and every referenced TODO from disk before accepting or resuming work.
-- **TODO upkeep and reread loop are mandatory**: Update the owning version TODO before starting,
-  switching, handing off, merging, deploying, blocking, or completing a task. After every
-  completed item, reread `TODO_INDEX.md` and all referenced TODO files from disk. Finish code
-  TODOs in version order, including review, merge and deployment, before non-code experiment
-  operations. If any unfinished item remains, continue; stop only when all TODOs are complete or
-  an external blocker cannot be removed within the current authorization. Preserve user edits
-  verbatim; never silently delete or reorder a user item.
-- **Focused releases**: Each patch/minor release has one clear product direction. When a request
-  mixes unrelated directions, warn briefly and split it into ordered version TODOs before
-  implementation. Use SemVer: patch for compatible fixes/polish, minor for compatible product
-  capability, major only for an intentionally incompatible product/API/data contract.
-- **Definition of Done**: CI passes + owning TODO updated + ROADMAP updated when its
-  strategic status changed + docs synced if architecture changed.
-
-### Model routing
-
-The tech-lead is responsible for selecting and explicitly pinning a model whenever it delegates work. This project uses **only** these two models:
-
-| Work type | Model | Typical work |
-|-----------|-------|--------------|
-| Fast, well-bounded supporting work | `gpt-5.6-terra` | Small scripts, mechanical edits, focused codebase exploration, test/log triage, and routine test additions. |
-| Complex, ambiguous, or high-risk work | `gpt-5.6-sol` | Architecture and implementation decisions, cross-cutting changes, authentication/authorization, database migrations, strategy logic, incident diagnosis, security review, and final integration. |
-
-- **Actively delegate simple scripts to Terra.** When a request has a known input/output, touches a small and isolated surface, and has a clear validation command, the lead should delegate it to `gpt-5.6-terra` with low or medium reasoning effort.
-- **Escalate deliberately.** Use Sol when requirements are unclear, a change can affect data integrity, security, money/trading behavior, APIs, multiple subsystems, or when Terra reports uncertainty or a failed validation.
-- **Keep the lead accountable.** The lead owns task decomposition, final review, integration, and verification. A Terra result is not approval to merge without the lead checking its diff and relevant tests.
-- **No unlisted model fallback.** Do not request or configure any model other than `gpt-5.6-sol` and `gpt-5.6-terra`. If one is unavailable, use the other and state the fallback in the handoff.
-- **Avoid needless delegation.** Do not spawn a subagent for a one-line answer, an action that must be performed serially, or a task whose coordination cost exceeds the work itself.
+- JWT auth (`python-jose` + bcrypt via `passlib`). Token expiry: 24h.
+- First registered user becomes admin. In production, first registration also requires `X-Bootstrap-Token`.
+- 14 granular permissions (future direction: simplify to 2 tiers, see docs/PROJECT_PHILOSOPHY.md).
 
 ## Local service lifecycle
 
-- **Never use the `process` tool** to start a long-running local service. It tracks child processes and can leave the agent session waiting indefinitely. Use the `bash` tool instead.
-- Do not directly run persistent commands such as `python -m uvicorn`, `npm run dev`, `vite`, or `docker compose up` without detached mode.
-
-### Windows
-
-Start a persistent process with PowerShell `Start-Process -PassThru`, redirect stdout/stderr to log files, save its PID under `.opencode/`, and return immediately. For the backend:
-
-```powershell
-New-Item -ItemType Directory -Force .opencode | Out-Null
-$proc = Start-Process -FilePath "python.exe" -ArgumentList "-m uvicorn backend.main:app --host 127.0.0.1 --port 8000" -WorkingDirectory "D:\doc\pi" -WindowStyle Hidden -RedirectStandardOutput "D:\doc\pi\server_stdout.log" -RedirectStandardError "D:\doc\pi\server_stderr.log" -PassThru
-$proc.Id | Set-Content "D:\doc\pi\.opencode\backend.pid"
-Write-Output "Backend started, PID=$($proc.Id)"
-```
-
-Verify: `Invoke-WebRequest http://127.0.0.1:8000/docs -TimeoutSec 5`
-Stop: `Stop-Process -Id (Get-Content .opencode\backend.pid) -Force`
-
-### macOS / Linux
-
-Use `nohup` to detach, redirect stdout/stderr, and save PID:
+- Do not run persistent commands (`uvicorn`, `npm run dev`, `vite`) without detached mode.
+- macOS/Linux:
 
 ```bash
 mkdir -p .opencode
 nohup python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 \
   > server_stdout.log 2> server_stderr.log &
 echo $! > .opencode/backend.pid
-echo "Backend started, PID=$(cat .opencode/backend.pid)"
 ```
 
 Verify: `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/docs`
@@ -168,22 +127,18 @@ Stop: `kill $(cat .opencode/backend.pid)`
 
 | File | What it covers |
 |------|---------------|
-| `docs/API.md` | All 60+ endpoints with request/response examples |
-| `docs/ARCHITECTURE_V3.md` | System design, DB schema, strategy class hierarchy, RBAC model |
-| `docs/STRATEGY_GUIDE.md` | How to implement a new strategy |
-| `docs/ROADMAP.md` | Versioned strategic roadmap and release criteria |
-| `docs/todo/TODO_INDEX.md` | Human-editable unique actual-work index and mandatory reread loop |
-| `docs/EXECUTION_TODO.md` | Compatibility pointer to the TODO index; never a second board |
-| `docs/TECH_LEAD.md` | Agent team workflow and DoD |
-| `docs/strategies/` | Per-strategy design docs |
+| `docs/PROJECT_PHILOSOPHY.md` | 七条宪法（一切决策判据） |
+| `docs/ARCHITECTURE_LEAN.md` | 北极星目标架构与验收标准 |
+| `docs/VERSIONING.md` | 版本号规则 + 开发/稳定线 + hotfix 流程 |
+| `docs/WORKFLOW_AUTOMATION.md` | 全自动流水线 + 并行安全机制 |
+| `docs/todo/TODO_INDEX.md` | 版本队列（与 GitHub issue 对应） |
+| `docs/API.md` | 端点参考（现状 181 个，目标 ~60） |
 
 ## Gotchas
 
-- **Backend must start from project root** — `config.py` resolves `PROJECT_ROOT` relative to its own path. Starting from `backend/` will fail to find `data/` files.
-- **No venv configured** — `pip install` is global. If you need isolation, create a venv yourself.
-- **No `request.json()` fallback** — routes that read request body use `await request.json()`. If the request lacks `Content-Type: application/json`, FastAPI returns 422.
-- **Frontend has Vitest coverage for deterministic portfolio allocation**. Add tests for new stateful UI logic.
-- **E2E tests are placeholder** — CI step exists but Playwright/Cypress is not configured.
-- **`backend/__init__.py` is empty** — this is intentional. Don't add imports that would break the `python -m uvicorn backend.main:app` module path.
-- **macOS: LightGBM / XGBoost need libomp**. Without `brew install libomp`, `import lightgbm` (or xgboost) throws `OSError: dlopen(libomp.dylib)`. Native-tree strategies whose libraries fail to load are skipped or unavailable, while the rest of the app and other ML strategies keep working. Install libomp to enable them.
-- **macOS: PyTorch uses MPS on Apple Silicon**. The LSTM and Transformer strategies detect `torch.backends.mps.is_available()` and prefer it over CPU.
+- **Backend must start from project root** — `config.py` resolves `PROJECT_ROOT` relative to its own path.
+- **No `request.json()` fallback** — routes read request body via pydantic models; FastAPI returns 422 without JSON content-type.
+- **`backend/__init__.py` is empty** — intentional; don't add imports that break `python -m uvicorn backend.main:app`.
+- **macOS: LightGBM/XGBoost need libomp** (`brew install libomp`); failed loads skip that strategy, rest of app keeps working.
+- **macOS: PyTorch prefers MPS** on Apple Silicon (detected automatically).
+- **契约快照目录 `backend/tests/snapshots/`**：行为不变的重构严禁改动；改动 = 行为变化声明，需用户确认。
