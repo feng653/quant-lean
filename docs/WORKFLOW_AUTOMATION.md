@@ -43,22 +43,49 @@
 | 标签 | 含义 |
 |---|---|
 | `agent` | 自动化 agent 可以开工（用户/协调者加此标签） |
+| `p:serial` | **全串行任务**：与任何进行中任务冲突（全局改动/行为变化版本必打） |
+| `domain:core` / `domain:data` / `domain:engine` / `domain:api` / `domain:jobs` / `domain:strategies` / `domain:frontend` / `domain:docs` / `domain:infra` / `domain:tests` | 任务碰触的领域（可多个），并行冲突判定的依据 |
 | `behavior-change` | 行为变化需求：PR 需用户 Approve 才合并 |
 | `blocked` | 阻塞中，agent 不得开工 |
 | `epic` | 版本级大任务（内含子任务清单） |
 
-## 五、版本顺序执行（一次托管全部任务）
+## 五、并行判定（机器自动，agent 开工前执行）
+
+`opencode.yml` 在启动 agent 前运行 `.github/scripts/check_parallel.py`：
+
+```
+规则1 串行屏障：新任务带 p:serial 而任一任务在进行中 → 拒绝
+        或 任一进行中任务带 p:serial → 拒绝一切新任务
+规则2 领域冲突：新任务与任一进行中任务的 domain:* 有交集 → 拒绝
+        无交集 → 放行并行（工作区隔离 + 串行合并保证安全）
+被拒时：自动在 issue 留言原因 + 移除 agent 标签（回到排队状态），
+        完成后重新加回 agent 标签即可开工
+```
+
+**例子**：v0.3.0（domain:tests,infra）在进行中时，一个只碰 `domain:strategies` 的新功能 issue 可以并行开工；而 v0.4.0（p:serial）必须等 v0.3.0 结束。
+
+## 六、版本顺序执行（一次托管全部任务）
 
 所有版本 epic issue 一次性创建（任务板挂满），但**只有带 `agent` 标签的 issue 才会被 agent 处理**：
 
-1. 给 `[v0.3.0]` 加 `agent` 标签 → agent 开工 → 合入。
-2. 验收后给 `[v0.4.0]` 加标签 → 开工……依此类推。
-3. 各版本内的并行子任务：子 issue 分别加 `agent` 标签即可并行（工作区隔离 + Merge Queue 保证安全）。
+1. 给 `[v0.3.0]` 加 `agent` 标签 → 守卫检查 → 开工 → 合入。
+2. 验收后给 `[v0.4.0]` 加 `agent` 标签 → 开工……依此类推。
+3. 版本内/版本间不相干任务：domain 标签不重叠即可并行（守卫自动放行）。
 
 ## 六、工作流文件
 
 | 文件 | 触发 | 作用 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
+| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
 | `.github/workflows/opencode.yml` | issue 加标签 / 评论 /oc | issue → agent → PR 自动流水线 |
 | `.github/workflows/release.yml` | tag push | 发布验证 + 版本证据归档 |
+
+## 七、已生效的 master 保护（ruleset: master-protection）
+
+- required_status_checks：CI 的 "Required checks" 必须通过才能合入
+- pull_request：所有改动必须走 PR，禁止直接 push master
+- non_fast_forward + deletion：禁止强推、禁止删分支
+
+**Merge Queue（可选增强）**：API 开启在免费版报错，需在 GitHub UI 手动开启：
+Settings → Rules → master-protection → 编辑 → 勾选 "Require merge queue"。
+开启后并发 PR 自动排队串行合并；未开启时靠"要求最新代码（strict）+ 手动按序合并"达到同样效果。

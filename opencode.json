@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "tech-lead",
+  "default_agent": "req-executor",
   "permission": {
     "process": "deny",
     "read": "allow",
@@ -18,13 +18,5 @@
     },
     "webfetch": "allow",
     "external_directory": "allow"
-  },
-  "provider": {
-    "anthropic": {
-      "options": {
-        "apiKey": "{env:ANTHROPIC_API_KEY}",
-        "baseURL": "{env:ANTHROPIC_BASE_URL}/v1"
-      }
-    }
   }
 }

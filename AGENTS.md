@@ -45,6 +45,9 @@ cd frontend && npm run lint && npm run test && npm run build
 
 - **一个 issue = 一个需求 = 一个版本方向**。用户开 issue，标题带版本号（如 `[v0.4.0] main.py 抽层`）。
 - **只有带 `agent` 标签的 issue 才允许被 agent 处理**（保证版本按序执行、并行安全）。
+- **并行判定标签**：提 issue 时声明 `domain:*`（碰触的领域）与 `p:serial`（全局改动）。
+  `opencode.yml` 开工前自动执行 `.github/scripts/check_parallel.py`：与进行中任务 domain 重叠或被
+  p:serial 屏障挡住 → 自动留言原因并移除 agent 标签（排队）；无冲突 → 放行并行。
 - 版本顺序：v0.3.0 契约锁定 → v0.4.0 抽层 → v0.5.0 去重 → v0.6.0 删除 → v0.7.0 数据收敛 → v0.8.0 行为简化（见 `docs/VERSIONING.md`）。
 
 ### 全自动流水线（GitHub 原生）
