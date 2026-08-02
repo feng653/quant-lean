@@ -38,8 +38,9 @@ jobs:
         uses: anomalyco/opencode/github@latest
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          use_github_token: true
           model: ${{ vars.AGENT_MODEL || 'deepseek/deepseek-v4-flash' }}
           agent: req-executor
           # 契约快照守则：行为不变任务禁止改 backend/tests/snapshots/；
