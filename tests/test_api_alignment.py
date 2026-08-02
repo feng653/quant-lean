@@ -748,6 +748,12 @@ class TestDataAPI:
             "evidence",
             "market_data",
             "benchmark",
+            "credibility_level",
+            "warnings",
+            "technical_blockers",
+            "production_blockers",
+            "research_trust",
+            "research_trust_profile",
         }
         assert "path" not in str(data).lower()
 
