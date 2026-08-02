@@ -1,0 +1,134 @@
+{
+  "schema_version": "quant-platform/frontend-single-strategy-tuning/v2",
+  "campaign": "non-ml-single-csi300-cross-validated-20260731",
+  "scope": {
+    "requires_training": false,
+    "excluded_categories": ["composite", "portfolio"]
+  },
+  "dataset": {
+    "kind": "cross_validated_market_research",
+    "evidence_level": "public_cross_validated",
+    "source_trust": "public_cross_validated_research_only",
+    "provider": "baostock:official",
+    "providers": ["baostock:official"],
+    "pool_preset": "csi300",
+    "cache_key": "csi300",
+    "price_adjustment": "hfq",
+    "required_fields": ["amount", "close", "high", "low", "open", "volume"],
+    "minimum_dates": 2500,
+    "codes": [],
+    "disclosure": "本轮使用真实双源交叉验证后复权行情，但股票池仍是当前沪深300成分，存在幸存者偏差，且尚未满足点时成分与双价格执行账本门禁；结果只能作为条件性研究证据，不得宣称无偏最优或用于实盘。"
+  },
+  "windows": {
+    "selection_start": "2016-01-04",
+    "selection_end": "2022-12-30",
+    "locked_test_start": "2023-01-03",
+    "locked_test_end": "2026-06-30"
+  },
+  "ranking": {
+    "primary": "sharpe_ratio",
+    "near_tie_tolerance": 0.02,
+    "tie_breakers": [
+      "max_drawdown_closest_to_zero",
+      "annual_return_desc",
+      "win_rate_desc",
+      "default_parameter_distance_asc",
+      "experiment_id_asc"
+    ]
+  },
+  "expected": {
+    "strategy_count": 10,
+    "baseline_experiments": 10,
+    "selection_experiments": 102,
+    "locked_test_experiments": 10,
+    "total_experiments": 122,
+    "persistent_sweep_tabs": 10
+  },
+  "strategies": [
+    {
+      "strategy_id": "liquidity_factor_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "lookback_days": [10, 21, 63],
+        "method": ["amihud", "amount"],
+        "top_k_pct": [0.1, 0.2]
+      }
+    },
+    {
+      "strategy_id": "low_volatility_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "lookback_days": [60, 120, 252],
+        "vol_method": ["standard", "downside"],
+        "top_k_pct": [0.1, 0.2]
+      }
+    },
+    {
+      "strategy_id": "multi_factor_score_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "momentum_weight": [0.5, 1.0, 1.5],
+        "short_reversal_weight": [0.5, 1.0],
+        "top_k_pct": [0.1, 0.2]
+      }
+    },
+    {
+      "strategy_id": "momentum_cross_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "lookback_months": [6, 12, 18],
+        "skip_months": [0, 1],
+        "top_k_pct": [0.1, 0.2]
+      }
+    },
+    {
+      "strategy_id": "short_reversal_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "lookback_days": [10, 21, 63],
+        "top_k_pct": [0.1, 0.2, 0.3]
+      }
+    },
+    {
+      "strategy_id": "macd_signal_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "fast": [8, 12],
+        "slow": [21, 26, 34],
+        "signal": [5, 9]
+      }
+    },
+    {
+      "strategy_id": "bollinger_breakout_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "period": [20, 40, 60],
+        "std_multiplier": [1.5, 2.0, 2.5]
+      }
+    },
+    {
+      "strategy_id": "ma_cross_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "fast_period": [5, 10, 20],
+        "slow_period": [30, 60, 120]
+      }
+    },
+    {
+      "strategy_id": "donchian_breakout_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "entry_period": [21, 55, 120],
+        "exit_period": [5, 20]
+      }
+    },
+    {
+      "strategy_id": "rsi_reversal_v1",
+      "expected_version": "1.0.0",
+      "grid": {
+        "period": [5, 7, 14],
+        "oversold": [20, 25, 30]
+      }
+    }
+  ]
+}

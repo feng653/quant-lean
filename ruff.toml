@@ -1,0 +1,13 @@
+target-version = "py311"
+line-length = 100
+
+[lint]
+# Keep the gate focused on correctness. Broader style cleanup can be introduced
+# incrementally without making the existing application fail closed overnight.
+select = ["E4", "E7", "E9", "F"]
+
+[lint.per-file-ignores]
+"backend/main.py" = ["E402"]
+"backend/api/strategies.py" = ["E402"]
+"backend/tests/*" = ["F401", "E402", "E712"]
+"tests/integration/*" = ["E402"]

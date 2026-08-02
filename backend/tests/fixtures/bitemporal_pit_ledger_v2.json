@@ -1,0 +1,67 @@
+{
+  "pit": {
+    "schema_version": "point-in-time-master-import/v2",
+    "domain": "index_membership",
+    "scope_id": "fixture_bitemporal_index",
+    "evidence_kind": "effective_dated_history",
+    "coverage_from": "2024-01-02",
+    "coverage_to": "2024-01-03",
+    "source": {
+      "provider": "fixture_declared_provider",
+      "dataset": "fixture_membership",
+      "version": "r1",
+      "evidence_level": "licensed",
+      "retrieved_at": "2024-01-01T10:00:00Z",
+      "available_at": "2024-01-01T09:00:00Z",
+      "revision": 1,
+      "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "records": [
+      {
+        "security_code": "000001",
+        "effective_from": "2024-01-02",
+        "effective_to": "2024-01-03",
+        "effective_at": "2024-01-02T00:00:00Z",
+        "available_at": "2024-01-01T09:00:00Z",
+        "member_name": "fixture only"
+      }
+    ]
+  },
+  "price": {
+    "schema_version": "dual-price-ledger-import/v2",
+    "scope_id": "fixture_bitemporal_index",
+    "coverage_from": "2024-01-02",
+    "coverage_to": "2024-01-03",
+    "revision": 1,
+    "raw_source": {
+      "provider": "fixture_declared_provider",
+      "dataset": "fixture_raw",
+      "version": "r1",
+      "adjustment": "raw",
+      "evidence_level": "declared",
+      "retrieved_at": "2024-01-04T01:00:00Z",
+      "available_at": "2024-01-03T16:00:00Z",
+      "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "research_source": {
+      "provider": "fixture_declared_provider",
+      "dataset": "fixture_hfq",
+      "version": "r1",
+      "adjustment": "hfq",
+      "evidence_level": "declared",
+      "retrieved_at": "2024-01-04T01:00:00Z",
+      "available_at": "2024-01-03T16:00:00Z",
+      "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "corporate_action_source": null,
+    "corporate_actions": [],
+    "raw_prices": [
+      {"security_code": "000001", "date": "2024-01-02", "open": 10, "high": 11, "low": 9, "close": 10, "volume": 1000},
+      {"security_code": "000001", "date": "2024-01-03", "open": 11, "high": 12, "low": 10, "close": 11, "volume": 1200}
+    ],
+    "research_prices": [
+      {"security_code": "000001", "date": "2024-01-02", "open": 10, "high": 11, "low": 9, "close": 10, "volume": 1000},
+      {"security_code": "000001", "date": "2024-01-03", "open": 11, "high": 12, "low": 10, "close": 11, "volume": 1200}
+    ]
+  }
+}

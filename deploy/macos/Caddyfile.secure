@@ -1,0 +1,57 @@
+{
+	# Only the local reverse proxy is trusted to supply client metadata.
+	servers {
+		trusted_proxies static 127.0.0.1 ::1
+		client_ip_headers X-Forwarded-For X-Real-IP
+	}
+}
+
+mac.feng37.top {
+	tls {
+		dns alidns {
+			access_key_id {env.ALIYUN_ACCESS_KEY_ID}
+			access_key_secret {env.ALIYUN_ACCESS_KEY_SECRET}
+		}
+	}
+
+	encode zstd gzip
+
+	# Keep security responses ahead of both reverse proxying and the SPA
+	# fallback. Caddy otherwise sorts `respond` after `handle` while adapting
+	# the Caddyfile, which would serve index.html for these restricted paths.
+	route {
+		# Management operations require both the backend's JWT/RBAC checks and a
+		# private-network client address observed by Caddy itself.  A forged
+		# X-Forwarded-For from an Internet client does not satisfy remote_ip.
+		@remote_admin {
+			path /api/admin /api/admin/*
+			not remote_ip private_ranges 127.0.0.1 ::1
+		}
+		respond @remote_admin "management plane is restricted to the local network" 403
+
+		# Interactive API documentation is still available on loopback port 8000,
+		# but is not part of the public reverse-proxy surface.
+		@api_docs path /docs /docs/* /redoc* /openapi.json
+		respond @api_docs 404
+
+		@backend path /api/* /ws /ws/*
+		handle @backend {
+			reverse_proxy 127.0.0.1:8000
+		}
+
+		handle {
+			root * /Users/xuhe/Developer/quant-platform/frontend/dist
+			try_files {path} /index.html
+			file_server
+		}
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+}

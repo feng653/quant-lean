@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply text-ink-900;
+    font-size: 14px;
+  }
+
+  body {
+    @apply bg-paper font-sans antialiased;
+    margin: 0;
+    overflow: hidden;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    min-height: 100%;
+  }
+
+  /* Consistent, clearly visible keyboard focus across all interactive elements. */
+  :focus-visible {
+    outline: 2px solid theme('colors.accent.600');
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: theme('colors.accent.100');
+    color: theme('colors.accent.900');
+  }
+
+  h1, h2, h3, h4 {
+    @apply text-ink-900;
+    text-wrap: balance;
+  }
+
+  /* Data-heavy pages rely on tabular figures for column alignment. */
+  input[type='number'] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Tabular numerals for metrics, money and code columns. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ink.300') transparent;
+  }
+}
+
+/* Respect reduced-motion preferences: no spinner loops, no transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

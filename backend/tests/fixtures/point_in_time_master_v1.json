@@ -1,0 +1,98 @@
+[
+  {
+    "schema_version": "point-in-time-master-import/v1",
+    "domain": "security",
+    "scope_id": "cn_equity",
+    "evidence_kind": "effective_dated_history",
+    "coverage_from": "2024-01-01",
+    "coverage_to": "2024-12-31",
+    "source": {
+      "provider": "fixture_exchange",
+      "dataset": "security_master",
+      "version": "2024",
+      "evidence_level": "exchange_authoritative",
+      "retrieved_at": "2025-01-02T08:00:00+08:00",
+      "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "records": [
+      {
+        "security_code": "000001",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-12-31",
+        "name": "平安银行",
+        "exchange": "SZSE",
+        "listing_status": "listed"
+      },
+      {
+        "security_code": "600000",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-12-31",
+        "name": "浦发银行",
+        "exchange": "SSE",
+        "listing_status": "listed"
+      }
+    ]
+  },
+  {
+    "schema_version": "point-in-time-master-import/v1",
+    "domain": "index_membership",
+    "scope_id": "csi300",
+    "evidence_kind": "effective_dated_history",
+    "coverage_from": "2024-01-01",
+    "coverage_to": "2024-12-31",
+    "source": {
+      "provider": "fixture_index",
+      "dataset": "csi300_membership",
+      "version": "2024",
+      "evidence_level": "licensed",
+      "retrieved_at": "2025-01-02T08:00:00+08:00",
+      "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "records": [
+      {
+        "security_code": "000001",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-06-30",
+        "member_name": "平安银行"
+      },
+      {
+        "security_code": "600000",
+        "effective_from": "2024-07-01",
+        "effective_to": "2024-12-31",
+        "member_name": "浦发银行"
+      }
+    ]
+  },
+  {
+    "schema_version": "point-in-time-master-import/v1",
+    "domain": "industry",
+    "scope_id": "cninfo_008001",
+    "evidence_kind": "effective_dated_history",
+    "coverage_from": "2024-01-01",
+    "coverage_to": "2024-12-31",
+    "source": {
+      "provider": "fixture_cninfo",
+      "dataset": "industry_008001",
+      "version": "2024",
+      "evidence_level": "public_cross_validated",
+      "retrieved_at": "2025-01-02T08:00:00+08:00",
+      "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "records": [
+      {
+        "security_code": "000001",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-12-31",
+        "industry_code": "J66",
+        "industry_name": "货币金融服务"
+      },
+      {
+        "security_code": "600000",
+        "effective_from": "2024-01-01",
+        "effective_to": "2024-12-31",
+        "industry_code": "J66",
+        "industry_name": "货币金融服务"
+      }
+    ]
+  }
+]

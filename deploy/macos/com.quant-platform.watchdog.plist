@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.quant-platform.watchdog</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/sbin/quant-platform-watchdog.sh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>30</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <key>Umask</key>
+  <integer>63</integer>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>QUANT_WATCHDOG_FAILURE_THRESHOLD</key>
+    <string>3</string>
+    <key>QUANT_WATCHDOG_BACKEND_UNRESPONSIVE_THRESHOLD</key>
+    <string>40</string>
+    <key>QUANT_WATCHDOG_RESTART_COOLDOWN_SECONDS</key>
+    <string>180</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/var/log/quant-platform-watchdog.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/quant-platform-watchdog.err</string>
+</dict>
+</plist>

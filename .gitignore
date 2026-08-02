@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime data and logs
+data/cache/
+data/staging/
+data/models/
+data/research_snapshots/
+data/pit_evidence/
+data/research_data/
+*.db
+data/*.db
+*.db.pre-*
+*.db-shm
+*.db-wal
+*.log
+*.pid
+
+# Node
+node_modules/
+frontend/dist/
+frontend/dist.pre-*/
+frontend/coverage/
+
+# Environment files
+.env
+.env.local
+.env.*
+!.env.example
+
+# OpenCode runtime
+.opencode/node_modules/
+.opencode/*.pid
+.opencode/*.log
+.opencode/chrome-*/
+.opencode/jobpanel-*/
+.opencode/repro-*/
+
+# One-off PIT collection/diagnostic scratch (not part of the product)
+.opencode/*.py
+.opencode/*.sh
+.opencode/*.json
+.opencode/*.patch
+.opencode/csindex_history/
+.opencode/pit_collect/
+.opencode/pit_parser_backup/
+NUL
+docs/xuhe.code-workspace
+docs/reports/WORK_PAUSE_20260730.md
+1785244262924.txt

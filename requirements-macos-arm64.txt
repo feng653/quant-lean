@@ -1,0 +1,14 @@
+# Reproducible Apple Silicon ML/data profile validated on 2026-07-29.
+#
+# Install this file directly. It includes the shared application requirements
+# and narrows the native/data stack to the versions exercised on the M-series
+# acceptance host. Windows continues to use requirements.txt unchanged.
+-r requirements.txt
+
+numpy==2.4.6
+pandas==3.0.5
+pyarrow==25.0.0
+scikit-learn==1.9.0
+lightgbm==4.7.0
+xgboost==3.2.0
+torch==2.13.0

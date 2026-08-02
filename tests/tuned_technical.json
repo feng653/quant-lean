@@ -1,0 +1,32 @@
+{
+  "ma_cross_v1": {
+    "best_params": {
+      "fast_period": 10,
+      "slow_period": 30,
+      "min_score": 0.0
+    },
+    "sharpe": 0.23197769544281327,
+    "return": 0.05703433985493889,
+    "mdd": -0.28163453345285766
+  },
+  "bollinger_breakout_v1": {
+    "best_params": {
+      "period": 40,
+      "std_multiplier": 2.5,
+      "min_score": 0.0
+    },
+    "sharpe": 0.5780262441528251,
+    "return": 0.2035422840099157,
+    "mdd": -0.3151811909157687
+  },
+  "risk_parity_v1": {
+    "best_params": {
+      "lookback": 63,
+      "rebalance_frequency": "weekly",
+      "min_score": 0.0
+    },
+    "sharpe": 0.7800520575649057,
+    "return": 0.16715044891773356,
+    "mdd": -0.19579180070000027
+  }
+}

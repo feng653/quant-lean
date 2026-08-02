@@ -1,0 +1,18 @@
+{
+  "lstm_rank_v1": {
+    "sharpe": -0.0474,
+    "return": -0.0108,
+    "trades": 700,
+    "final_equity": 989187.0,
+    "max_drawdown": -0.2474,
+    "error": null
+  },
+  "transformer_rank_v1": {
+    "sharpe": 0.0626,
+    "return": 0.0664,
+    "trades": 700,
+    "final_equity": 1066407.0,
+    "max_drawdown": -0.2474,
+    "error": null
+  }
+}

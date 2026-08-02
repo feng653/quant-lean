@@ -1,0 +1,206 @@
+{
+  "protocol": {
+    "pool_id": "csi500",
+    "pool_members": 429,
+    "data_source": "local cache only",
+    "train_start": "2019-01-02",
+    "train_end": "2024-12-31",
+    "test_start": "2025-01-02",
+    "test_end": "2026-07-24",
+    "execution": "T signal / T+1 open fill / T+1 close valuation"
+  },
+  "strategies": {
+    "ma_cross_v1": {
+      "experiment_id": 96,
+      "status": "completed",
+      "equity_points": 377,
+      "trades": 595,
+      "metrics": {
+        "sharpe_ratio": 0.10032994859979243,
+        "annual_return": 0.017106122984210437,
+        "max_drawdown": -0.27275262787743043,
+        "win_rate": 0.44329896907216493
+      },
+      "data_version": "r1833|c2574|end2026-07-24|hf9c10d51",
+      "model_artifact": null,
+      "execution_verified": "T signal / T+1 local open fill",
+      "frontend_path": "/experiment/96",
+      "deployment": {
+        "deployment_id": 2,
+        "status": "active",
+        "source_experiment_id": 96,
+        "source_model_artifact_id": null,
+        "frontend_path": "/trading/portfolio"
+      },
+      "job_id": "6d0d5160c98f402ebc94b31f3ec74674",
+      "candidate_id": "7f391a244e1c",
+      "validation_rank": 1,
+      "params": {
+        "fast_period": 20,
+        "slow_period": 30,
+        "min_score": 0.0
+      },
+      "validation_metrics": {
+        "sharpe_ratio": 0.8757342687149436,
+        "annualized_return": 0.28062510159821774,
+        "max_drawdown": -0.2551741194644829,
+        "win_rate": 0.39644970414201186,
+        "total_trades": 169.0
+      }
+    },
+    "rsi_reversal_v1": {
+      "experiment_id": 97,
+      "status": "completed",
+      "equity_points": 377,
+      "trades": 299,
+      "metrics": {
+        "sharpe_ratio": 0.04594352546975734,
+        "annual_return": 0.000249872195766887,
+        "max_drawdown": -0.19519282003190938,
+        "win_rate": 0.39285714285714285
+      },
+      "data_version": "r1833|c2574|end2026-07-24|hf9c10d51",
+      "model_artifact": null,
+      "execution_verified": "T signal / T+1 local open fill",
+      "frontend_path": "/experiment/97",
+      "deployment": {
+        "deployment_id": 3,
+        "status": "active",
+        "source_experiment_id": 97,
+        "source_model_artifact_id": null,
+        "frontend_path": "/trading/portfolio"
+      },
+      "job_id": "d740a497ee554d3081de3e5aaffa560b",
+      "candidate_id": "4737f206f96f",
+      "validation_rank": 1,
+      "params": {
+        "period": 7,
+        "oversold": 25,
+        "overbought": 75,
+        "min_score": 0.0
+      },
+      "validation_metrics": {
+        "sharpe_ratio": 1.2053458366326124,
+        "annualized_return": 0.4609881888911622,
+        "max_drawdown": -0.1943769599136317,
+        "win_rate": 0.608,
+        "total_trades": 125.0
+      }
+    },
+    "macd_signal_v1": {
+      "experiment_id": 98,
+      "status": "completed",
+      "equity_points": 377,
+      "trades": 89,
+      "metrics": {
+        "sharpe_ratio": -1.120245698894119,
+        "annual_return": -0.3866456172430156,
+        "max_drawdown": -0.5624885446800153,
+        "win_rate": 0.32558139534883723
+      },
+      "data_version": "r1833|c2574|end2026-07-24|hf9c10d51",
+      "model_artifact": null,
+      "execution_verified": "T signal / T+1 local open fill",
+      "frontend_path": "/experiment/98",
+      "deployment": {
+        "deployment_id": 4,
+        "status": "active",
+        "source_experiment_id": 98,
+        "source_model_artifact_id": null,
+        "frontend_path": "/trading/portfolio"
+      },
+      "job_id": "b99f7e679c104e3787b3d1700764d6fe",
+      "candidate_id": "1c2263d92c8d",
+      "validation_rank": 1,
+      "params": {
+        "fast": 8,
+        "slow": 21,
+        "signal": 5,
+        "min_score": 0.2
+      },
+      "validation_metrics": {
+        "sharpe_ratio": 0.5740055293554682,
+        "annualized_return": 0.1883651138307083,
+        "max_drawdown": -0.2432045747442714,
+        "win_rate": 0.4,
+        "total_trades": 35.0
+      }
+    },
+    "bollinger_breakout_v1": {
+      "experiment_id": 99,
+      "status": "completed",
+      "equity_points": 377,
+      "trades": 121,
+      "metrics": {
+        "sharpe_ratio": 0.2943757514866467,
+        "annual_return": 0.07223974383216891,
+        "max_drawdown": -0.48458391221987285,
+        "win_rate": 0.5084745762711864
+      },
+      "data_version": "r1833|c2574|end2026-07-24|hf9c10d51",
+      "model_artifact": null,
+      "execution_verified": "T signal / T+1 local open fill",
+      "frontend_path": "/experiment/99",
+      "deployment": {
+        "deployment_id": 5,
+        "status": "active",
+        "source_experiment_id": 99,
+        "source_model_artifact_id": null,
+        "frontend_path": "/trading/portfolio"
+      },
+      "job_id": "68b24b3ab3f749398947ce045ce1fb1a",
+      "candidate_id": "82c3867a5cbb",
+      "validation_rank": 1,
+      "params": {
+        "period": 60,
+        "std_multiplier": 2.0,
+        "min_score": 0.2
+      },
+      "validation_metrics": {
+        "sharpe_ratio": 0.7488681927152983,
+        "annualized_return": 0.2866540376009614,
+        "max_drawdown": -0.27710057915818065,
+        "win_rate": 0.2564102564102564,
+        "total_trades": 39.0
+      }
+    },
+    "risk_parity_v1": {
+      "experiment_id": 100,
+      "status": "completed",
+      "equity_points": 377,
+      "trades": 688,
+      "metrics": {
+        "sharpe_ratio": -2.7753115174253433,
+        "annual_return": -0.0037588930513079433,
+        "max_drawdown": -0.01556651857859656,
+        "win_rate": 0.5089820359281437
+      },
+      "data_version": "r1833|c2574|end2026-07-24|hf9c10d51",
+      "model_artifact": null,
+      "execution_verified": "T signal / T+1 local open fill",
+      "frontend_path": "/experiment/100",
+      "deployment": {
+        "deployment_id": 6,
+        "status": "active",
+        "source_experiment_id": 100,
+        "source_model_artifact_id": null,
+        "frontend_path": "/trading/portfolio"
+      },
+      "job_id": "358421e67a504b3f9b246417803767fa",
+      "candidate_id": "f86fe385ec23",
+      "validation_rank": 1,
+      "params": {
+        "lookback": 63,
+        "rebalance_frequency": "monthly",
+        "min_score": 0.0
+      },
+      "validation_metrics": {
+        "sharpe_ratio": -0.2799788604582657,
+        "annualized_return": 0.02563649997026962,
+        "max_drawdown": -0.01197077628729467,
+        "win_rate": 0.5714285714285714,
+        "total_trades": 196.0
+      }
+    }
+  }
+}

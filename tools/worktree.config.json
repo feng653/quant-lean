@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "primaryBranch": "master",
+  "branchPrefix": "codex",
+  "worktreeRoot": "../pi-worktrees",
+  "enforcementMode": "observe",
+  "leaderLeaseMinutes": 30
+}

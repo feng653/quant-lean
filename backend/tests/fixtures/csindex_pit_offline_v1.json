@@ -1,0 +1,64 @@
+{
+  "archive": {
+    "request": {
+      "lang": "cn",
+      "classlist": [],
+      "indexlist": [],
+      "page": {
+        "desc": "",
+        "key": "",
+        "page": 1,
+        "rows": 2
+      },
+      "related_topics": [],
+      "typelist": []
+    },
+    "response": {
+      "data": [
+        {
+          "id": 15267,
+          "title": "关于沪深300、中证500、中证1000等指数定期调整结果的公告",
+          "theme": "指数调样",
+          "publishDate": "2024-05-31",
+          "noticeType": "announcement"
+        },
+        {
+          "id": 15299,
+          "title": "非调样公告",
+          "theme": "其他",
+          "publishDate": "2024-06-17",
+          "noticeType": "announcement"
+        }
+      ],
+      "append": null,
+      "size": 2,
+      "total": 2,
+      "code": "200",
+      "msg": "Success",
+      "pageSize": 2,
+      "currentPage": 1,
+      "success": true
+    }
+  },
+  "announcement": {
+    "code": "200",
+    "msg": "Success",
+    "data": {
+      "enclosureList": [
+        {
+          "id": 4450,
+          "fileName": "附件：部分指数样本调整名单.pdf",
+          "fileUrl": "https://oss-ch.csindex.com.cn/notice/fixture-adjustment.pdf",
+          "noticeId": 15267
+        }
+      ],
+      "id": 15267,
+      "noticeStatus": 1,
+      "publishDate": "2024-05-31",
+      "title": "关于沪深300、中证500、中证1000等指数定期调整结果的公告",
+      "content": "<p>中证指数有限公司决定调整样本，于2024年6月14日收市后生效。其中沪深300指数更换1只样本，中证500指数更换1只样本，中证1000指数更换1只样本。</p>"
+    },
+    "success": true
+  },
+  "attachment_payload": "%PDF-1.4 fixed offline adjustment fixture"
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": "dual-price-ledger-import/v1",
+  "scope_id": "csi300",
+  "coverage_from": "2024-01-02",
+  "coverage_to": "2024-01-03",
+  "raw_source": {
+    "provider": "licensed-feed",
+    "dataset": "cn-equity-daily-raw",
+    "version": "2024.01.03",
+    "adjustment": "raw",
+    "evidence_level": "licensed",
+    "retrieved_at": "2024-01-04T01:00:00Z",
+    "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "research_source": {
+    "provider": "validated-research-feed",
+    "dataset": "cn-equity-daily-hfq",
+    "version": "2024.01.03",
+    "adjustment": "hfq",
+    "evidence_level": "public_cross_validated",
+    "retrieved_at": "2024-01-04T01:05:00Z",
+    "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "corporate_action_source": {
+    "provider": "licensed-actions",
+    "dataset": "cn-equity-corporate-actions",
+    "version": "2024.01.03",
+    "adjustment": "corporate_action",
+    "evidence_level": "licensed",
+    "retrieved_at": "2024-01-04T01:10:00Z",
+    "content_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "raw_prices": [
+    {
+      "security_code": "000001",
+      "date": "2024-01-02",
+      "open": 10.0,
+      "high": 11.0,
+      "low": 9.0,
+      "close": 10.5,
+      "volume": 1000.0
+    },
+    {
+      "security_code": "000001",
+      "date": "2024-01-03",
+      "open": 10.5,
+      "high": 12.0,
+      "low": 10.0,
+      "close": 11.0,
+      "volume": 1200.0
+    }
+  ],
+  "research_prices": [
+    {
+      "security_code": "000001",
+      "date": "2024-01-02",
+      "open": 10.0,
+      "high": 11.0,
+      "low": 9.0,
+      "close": 10.5,
+      "volume": 1000.0
+    },
+    {
+      "security_code": "000001",
+      "date": "2024-01-03",
+      "open": 11.55,
+      "high": 13.2,
+      "low": 11.0,
+      "close": 12.1,
+      "volume": 1200.0
+    }
+  ],
+  "corporate_actions": [
+    {
+      "security_code": "000001",
+      "effective_date": "2024-01-03",
+      "action_type": "split",
+      "adjustment_multiplier": 1.1,
+      "reference_id": "action-000001-20240103"
+    }
+  ]
+}
