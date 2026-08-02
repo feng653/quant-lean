@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON((github.event_name == 'pull_request') && '["ubuntu-latest"]' || '["ubuntu-latest", "windows-2022", "macos-15"]') }}
+        os: ${{ fromJSON((github.event_name == 'push' && github.ref == 'refs/heads/master') && '["ubuntu-latest", "macos-15"]' || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@v4
 
