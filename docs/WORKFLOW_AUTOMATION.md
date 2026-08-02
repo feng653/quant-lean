@@ -59,6 +59,16 @@
 
 | 文件 | 触发 | 作用 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
+| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
 | `.github/workflows/opencode.yml` | issue 加标签 / 评论 /oc | issue → agent → PR 自动流水线 |
 | `.github/workflows/release.yml` | tag push | 发布验证 + 版本证据归档 |
+
+## 七、已生效的 master 保护（ruleset: master-protection）
+
+- required_status_checks：CI 的 "Required checks" 必须通过才能合入
+- pull_request：所有改动必须走 PR，禁止直接 push master
+- non_fast_forward + deletion：禁止强推、禁止删分支
+
+**Merge Queue（可选增强）**：API 开启在免费版报错，需在 GitHub UI 手动开启：
+Settings → Rules → master-protection → 编辑 → 勾选 "Require merge queue"。
+开启后并发 PR 自动排队串行合并；未开启时靠"要求最新代码（strict）+ 手动按序合并"达到同样效果。
