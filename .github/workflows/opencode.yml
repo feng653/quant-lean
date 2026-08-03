@@ -65,4 +65,6 @@ jobs:
             2. 分析代码，提出实现方案（改哪些文件、是否行为变化）。
             3. 在独立分支实现，跑完整验证（ruff、pytest backend/tests、pytest tests/integration、前端 build）。
             4. 开 PR：描述里写清改动、测试结果、快照状态（零 diff 或显式变更清单）。
+            5. 若开 PR 被 GitHub 拒绝（403 not permitted）：把代码 commit + push 到分支，
+               在 issue 评论写明"分支名: <branch>"，结束。
             行为不变的任务不得改动 backend/tests/snapshots/ 任何文件。
