@@ -7,10 +7,11 @@ and checks GitHub's server-side asset digest after upload and before download.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
+from backend.core.hashing import file_sha256
 
 import argparse
 import fcntl
-import hashlib
 import json
 import os
 import re
@@ -19,7 +20,6 @@ import stat
 import subprocess
 import tempfile
 from collections.abc import Callable, Iterable, Sequence
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -42,10 +42,6 @@ class RepositoryBackupError(RuntimeError):
     """Raised when a remote backup cannot satisfy its safety contract."""
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
 def _canonical_json(value: Any) -> bytes:
     return json.dumps(
         value,
@@ -58,14 +54,6 @@ def _canonical_json(value: Any) -> bytes:
 def _redact(value: object) -> str:
     text = _TOKEN_RE.sub("[REDACTED]", str(value))
     return _CREDENTIAL_URL_RE.sub("https://[REDACTED]@github.com", text)
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _require_absolute_unlinked(path: Path, *, label: str, exists: bool) -> Path:
@@ -255,7 +243,7 @@ def configure_repository(
         "release_tag": _RELEASE_TAG,
         "retention_count": retention_count,
         "private_verified": True,
-        "private_verified_at": _utc_now(),
+        "private_verified_at": utc_now_iso(),
     }
     descriptor, temporary_name = tempfile.mkstemp(prefix=".backup-repo-", dir=parent)
     temporary = Path(temporary_name)
@@ -403,7 +391,7 @@ def _asset_by_name(release: dict[str, Any], name: str) -> dict[str, Any] | None:
 
 
 def _verify_asset(asset: dict[str, Any], archive: Path) -> str:
-    expected_digest = _sha256_file(archive)
+    expected_digest = file_sha256(archive)
     if asset.get("size") != archive.stat().st_size:
         raise RepositoryBackupError("GitHub Release asset size mismatch")
     if asset.get("digest") != f"sha256:{expected_digest}":
@@ -515,7 +503,7 @@ def sync_archive(
     verifier: Callable[[str, str], None] = verify_private_github_repository,
 ) -> dict[str, Any]:
     """Idempotently upload one encrypted archive as a private Release asset."""
-    started_at = _utc_now()
+    started_at = utc_now_iso()
     archive_name = archive_path.name
     try:
         archive = _validate_archive(archive_path)
@@ -545,7 +533,7 @@ def sync_archive(
             "operation": "encrypted_release_upload",
             "status": "uploaded",
             "started_at": started_at,
-            "completed_at": _utc_now(),
+            "completed_at": utc_now_iso(),
             "repository": f"github.com/{config['owner']}/{config['repository']}",
             "release_tag": config["release_tag"],
             "archive_name": archive.name,
@@ -563,7 +551,7 @@ def sync_archive(
             "operation": "encrypted_release_upload",
             "status": "failed",
             "started_at": started_at,
-            "completed_at": _utc_now(),
+            "completed_at": utc_now_iso(),
             "archive_name": archive_name,
             "local_archive_retained": archive_path.exists(),
             "error": error,
@@ -609,7 +597,7 @@ def download_verified_archive(
     verifier: Callable[[str, str], None] = verify_private_github_repository,
 ) -> tuple[Path, dict[str, Any]]:
     """Download a Release asset and verify it before publishing for restore."""
-    started_at = _utc_now()
+    started_at = utc_now_iso()
     if not _ARCHIVE_RE.fullmatch(archive_name):
         raise RepositoryBackupError("encrypted backup archive name is invalid")
     config = load_config(config_path)
@@ -649,7 +637,7 @@ def download_verified_archive(
             downloaded = _validate_archive(downloaded_path)
             if (
                 downloaded.stat().st_size != expected_size
-                or f"sha256:{_sha256_file(downloaded)}" != expected_digest
+                or f"sha256:{file_sha256(downloaded)}" != expected_digest
             ):
                 raise RepositoryBackupError("downloaded Release asset integrity failed")
             os.replace(downloaded, target)
@@ -663,7 +651,7 @@ def download_verified_archive(
         "operation": "encrypted_release_download_verify",
         "status": "verified",
         "started_at": started_at,
-        "completed_at": _utc_now(),
+        "completed_at": utc_now_iso(),
         "repository": f"github.com/{config['owner']}/{config['repository']}",
         "release_tag": config["release_tag"],
         "archive_name": archive_name,

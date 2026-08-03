@@ -1,4 +1,5 @@
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import hashlib
 import json
@@ -29,10 +30,6 @@ from remote_worker.runner import RemoteTrainingRunner
 
 TASK_ID = "0123456789abcdef8123456789abcdef"
 FIELDS = ("open", "high", "low", "close", "volume", "amount")
-
-
-def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 class FakeStrategy(TrainableStrategy):
@@ -213,7 +210,7 @@ def _manifest(parquet_path: Path) -> dict[str, Any]:
         "experiment_id": 42,
         "strategy": {
             "id": "fake_trainable_v1",
-            "source_sha256": _file_sha256(source_path),
+            "source_sha256": file_sha256(source_path),
         },
         "params": params,
         "params_sha256": sha256_json(params),
@@ -224,7 +221,7 @@ def _manifest(parquet_path: Path) -> dict[str, Any]:
         },
         "dataset": {
             "url": "data",
-            "sha256": _file_sha256(parquet_path),
+            "sha256": file_sha256(parquet_path),
             "data_version": "test-data-v1",
             "date_start": "2024-01-01",
             "date_end": "2024-01-06",
@@ -461,7 +458,7 @@ def test_real_api_envelope_manifest_and_worker_contract_round_trip(
             "strategy_id": "fake_trainable_v1",
             "version": "1.0.0",
             "retrain_frequency": "never",
-            "source_sha256": _file_sha256(Path(__file__).resolve()),
+            "source_sha256": file_sha256(Path(__file__).resolve()),
         },
         "params": params,
         "params_sha256": sha256_json(params),
@@ -472,7 +469,7 @@ def test_real_api_envelope_manifest_and_worker_contract_round_trip(
             "data_end": "2024-01-06",
         },
         "data": {
-            "sha256": _file_sha256(parquet_file),
+            "sha256": file_sha256(parquet_file),
             "data_version": "api-snapshot-v1",
             "rows": 6,
             "columns": 6,
@@ -542,5 +539,5 @@ def test_real_api_envelope_manifest_and_worker_contract_round_trip(
     assert report["experiment_id"] == 42
     assert report["strategy_id"] == "fake_trainable_v1"
     assert report["params_sha256"] == sha256_json(params)
-    assert report["data_sha256"] == _file_sha256(parquet_file)
+    assert report["data_sha256"] == file_sha256(parquet_file)
     assert (Path(report["bundle_dir"]) / "model.joblib").is_file()

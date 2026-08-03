@@ -1,4 +1,5 @@
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 from datetime import date, timedelta
 import hashlib
@@ -291,22 +292,18 @@ def _get(client: TestClient, experiment_id: int = 1, **params):
     )
 
 
-def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
 def test_owner_report_is_deterministic_read_only_and_explicitly_post_hoc(
     robustness_client,
 ) -> None:
     client, database, _ = robustness_client
-    before = _file_sha256(database)
+    before = file_sha256(database)
 
     first = _get(client, seed=19)
     second = _get(client, seed=19)
 
     assert first.status_code == 200
     assert first.json() == second.json()
-    assert _file_sha256(database) == before
+    assert file_sha256(database) == before
     report = first.json()["data"]
     assert report["analysis_role"] == "post_hoc_diagnostic"
     assert report["selection_eligible"] is False

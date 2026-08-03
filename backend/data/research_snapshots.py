@@ -1,6 +1,7 @@
 """Immutable content-addressed Parquet snapshots for exact research replay."""
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import hashlib
 import json
@@ -51,14 +52,6 @@ def _canonical_bytes(value: Any) -> bytes:
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(_CHUNK_SIZE), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _axis_names(axis: pd.Index) -> list[str | None]:
@@ -185,7 +178,7 @@ class ResearchSnapshotStore:
                 compression="snappy",
                 index=True,
             )
-            file_hash = _sha256_file(temp_path)
+            file_hash = file_sha256(temp_path)
             size_bytes = temp_path.stat().st_size
             target = kind_dir / f"{file_hash}.parquet"
             try:
@@ -260,5 +253,5 @@ class ResearchSnapshotStore:
             raise SnapshotIntegrityError("snapshot file is missing") from exc
         if stat.st_size != size_bytes:
             raise SnapshotIntegrityError("snapshot file size changed")
-        if _sha256_file(path) != file_hash:
+        if file_sha256(path) != file_hash:
             raise SnapshotIntegrityError("snapshot file hash changed")

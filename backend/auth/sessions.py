@@ -7,6 +7,7 @@ generic 401 response.  No function in this module logs or returns a token.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now
 
 import hashlib
 import secrets
@@ -63,10 +64,6 @@ async def ensure_auth_session_schema(conn: aiosqlite.Connection) -> None:
     await conn.executescript(_AUTH_SESSION_SCHEMA)
 
 
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 def _timestamp(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -109,7 +106,7 @@ async def issue_new_session(
     session per interactive login, which makes device-level revoke meaningful.
     """
     await ensure_auth_session_schema(conn)
-    now = _utc_now()
+    now = utc_now()
     session_id = uuid4().hex
     family_id = uuid4().hex
     expires_at = now + timedelta(days=settings.AUTH_SESSION_MAX_DAYS)
@@ -168,7 +165,7 @@ async def rotate_refresh_token(
         return None
 
     await ensure_auth_session_schema(conn)
-    now = _utc_now()
+    now = utc_now()
     now_text = _timestamp(now)
     await conn.execute("BEGIN IMMEDIATE")
     try:
@@ -265,7 +262,7 @@ async def session_is_active(
             """SELECT 1 FROM auth_sessions
                WHERE session_id=? AND user_id=? AND revoked_at IS NULL
                AND expires_at > ?""",
-            (session_id, user_id, _timestamp(_utc_now())),
+            (session_id, user_id, _timestamp(utc_now())),
         )
         return await cursor.fetchone() is not None
     except aiosqlite.Error:
@@ -281,7 +278,7 @@ async def revoke_session(
 ) -> int:
     """Revoke one device session, or all sessions when ``session_id`` is None."""
     await ensure_auth_session_schema(conn)
-    now_text = _timestamp(_utc_now())
+    now_text = _timestamp(utc_now())
     where = "user_id=?" + (" AND session_id=?" if session_id else "")
     params: tuple[object, ...] = (user_id, session_id) if session_id else (user_id,)
     cursor = await conn.execute(

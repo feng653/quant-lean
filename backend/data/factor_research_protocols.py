@@ -1,13 +1,13 @@
 """Immutable, user-isolated preregistration protocols for factor research."""
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_z
 
 import hashlib
 import json
 import sqlite3
 import threading
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -16,10 +16,6 @@ from backend.config import settings
 
 PROTOCOL_SCHEMA = "factor-research-protocol/v1"
 _SCHEMA_LOCK = threading.Lock()
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _canonical_json(value: Any) -> str:
@@ -201,7 +197,7 @@ class FactorResearchProtocolStore:
         payload: Mapping[str, Any],
     ) -> dict[str, Any]:
         protocol_id = "fproto_" + uuid.uuid4().hex
-        now = _utc_now()
+        now = utc_now_z()
         payload_json = _canonical_json(payload)
         payload_digest = _digest(payload_json)
         with self._connect() as connection:
@@ -239,7 +235,7 @@ class FactorResearchProtocolStore:
     ) -> dict[str, Any]:
         payload_json = _canonical_json(payload)
         payload_digest = _digest(payload_json)
-        now = _utc_now()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             series = connection.execute(
@@ -336,7 +332,7 @@ class FactorResearchProtocolStore:
                     SET status = 'locked', locked_at = ?
                     WHERE protocol_id = ? AND version = ? AND status = 'draft'
                     """,
-                    (_utc_now(), protocol_id, version),
+                    (utc_now_z(), protocol_id, version),
                 )
         return self.get_version(
             owner_user_id=owner_user_id,

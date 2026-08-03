@@ -1,6 +1,7 @@
 """Immutable, canonical manifests for reproducible research runs."""
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import asyncio
 from dataclasses import asdict
@@ -105,18 +106,10 @@ def canonical_sha256(value: Any) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
 
 
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _strategy_source_sha256(strategy: Any) -> str:
     try:
         source_path = Path(inspect.getfile(type(strategy))).resolve()
-        return _file_sha256(source_path)
+        return file_sha256(source_path)
     except (OSError, TypeError):
         source = inspect.getsource(type(strategy)).encode("utf-8")
         return hashlib.sha256(source).hexdigest()
@@ -193,7 +186,7 @@ def capture_runtime_environment(
     requirements = settings.PROJECT_ROOT / "requirements.txt"
     dependency_file = {
         "name": "requirements.txt",
-        "sha256": _file_sha256(requirements) if requirements.is_file() else None,
+        "sha256": file_sha256(requirements) if requirements.is_file() else None,
     }
     return {
         "git": capture_git_state(),
@@ -858,7 +851,7 @@ async def append_artifact_manifest(
     """Append a hash-only supplement; never mutate the initial manifest."""
     path = Path(artifact_path)
     size = path.stat().st_size
-    sha256 = await asyncio.to_thread(_file_sha256, path)
+    sha256 = await asyncio.to_thread(file_sha256, path)
     safe_metadata = dict(metadata or {})
     _assert_safe_manifest_value(safe_metadata)
     metadata_json = canonical_json_bytes(safe_metadata).decode("utf-8")

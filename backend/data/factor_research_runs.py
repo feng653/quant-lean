@@ -1,13 +1,13 @@
 """Durable, immutable and user-isolated factor research run records."""
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_z
 
 import hashlib
 import json
 import sqlite3
 import threading
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,10 +29,6 @@ def _canonical_json(value: Any) -> str:
         sort_keys=True,
         separators=(",", ":"),
     )
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _sha256_text(value: str) -> str:
@@ -260,7 +256,7 @@ class FactorResearchRunStore:
             ).hexdigest()
         )
         run_id = "frun_" + uuid.uuid4().hex
-        created_at = _utc_now()
+        created_at = utc_now_z()
         run_digest = _run_digest(
             run_id=run_id,
             owner_user_id=owner_user_id,
@@ -597,7 +593,7 @@ class FactorResearchRunStore:
         )
 
     def archive(self, *, owner_user_id: int, run_id: str) -> bool:
-        archived_at = _utc_now()
+        archived_at = utc_now_z()
         with self._connect() as connection:
             cursor = connection.execute(
                 """

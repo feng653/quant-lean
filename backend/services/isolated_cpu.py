@@ -7,9 +7,9 @@ process slot is intentional for the supported 8 GB host.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import asyncio
-import hashlib
 import os
 import pickle
 import shutil
@@ -101,14 +101,6 @@ def _write_private_pickle(path: Path, value: object) -> None:
         pickle.dump(value, handle, protocol=pickle.HIGHEST_PROTOCOL)
         handle.flush()
         os.fsync(handle.fileno())
-
-
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _terminate(process: subprocess.Popen[bytes]) -> None:
@@ -208,7 +200,7 @@ class IsolatedCpuExecutor:
                         "CPU 隔离任务输入超过 8GB 主机安全大小限制",
                     )
                 try:
-                    digest = _file_sha256(request_path)
+                    digest = file_sha256(request_path)
                 except OSError as exc:
                     raise IsolatedCpuError(
                         "isolated_cpu_input_failed",

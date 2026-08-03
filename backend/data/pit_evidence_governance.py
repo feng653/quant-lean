@@ -6,6 +6,7 @@ to an immutable staging package and records compare-and-swap decisions.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_z
 
 import base64
 import binascii
@@ -16,7 +17,7 @@ import re
 import sqlite3
 import stat
 import uuid
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Iterable, Literal, Mapping, Sequence
 
@@ -90,10 +91,6 @@ def _canonical_json(value: Any) -> str:
 
 def _canonical_sha256(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value).encode()).hexdigest()
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 GOVERNANCE_SCHEMA_SQL = """
@@ -835,7 +832,7 @@ class PitEvidenceGovernance:
                 int(actor_user_id),
                 event_json,
                 hashlib.sha256(event_json.encode()).hexdigest(),
-                _utc_now(),
+                utc_now_z(),
             ),
         )
 
@@ -1595,7 +1592,7 @@ class PitEvidenceGovernance:
             }
         package_id = "pitpkg_" + package_sha256[:32]
         package_json = _canonical_json(package)
-        now = _utc_now()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._validate_auxiliary_registrations(
@@ -1821,7 +1818,7 @@ class PitEvidenceGovernance:
                 (
                     expected_sha256,
                     result["size_bytes"],
-                    _utc_now(),
+                    utc_now_z(),
                     int(actor_user_id),
                 ),
             )
@@ -1838,7 +1835,7 @@ class PitEvidenceGovernance:
                         kind,
                         provenance_json,
                         provenance_sha256,
-                        _utc_now(),
+                        utc_now_z(),
                         int(actor_user_id),
                     ),
                 )
@@ -1892,7 +1889,7 @@ class PitEvidenceGovernance:
                     (
                         digest,
                         result["size_bytes"],
-                        _utc_now(),
+                        utc_now_z(),
                         int(actor_user_id),
                     ),
                 )
@@ -2065,7 +2062,7 @@ class PitEvidenceGovernance:
             if normalized_attestations is not None
             else None
         )
-        now = _utc_now()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             if decision == "approved":
@@ -2231,7 +2228,7 @@ class PitEvidenceGovernance:
                     "scope_id": document["scope_id"],
                     "batch_id": result["batch_id"],
                     "batch_digest": result["batch_digest"],
-                    "imported_at": _utc_now(),
+                    "imported_at": utc_now_z(),
                 }
                 existing_receipt = connection.execute(
                     """
@@ -2294,7 +2291,7 @@ class PitEvidenceGovernance:
                 result = self.get_package(package_id)
                 result["idempotent"] = True
                 return result
-            now = _utc_now()
+            now = utc_now_z()
             cursor = connection.execute(
                 """
                 UPDATE pit_evidence_packages

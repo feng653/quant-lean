@@ -6,6 +6,8 @@ research while preserving its limitations; it can never authorize live use.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
+from backend.core.hashing import file_sha256
 
 import hashlib
 import json
@@ -161,10 +163,6 @@ class _ResearchRowSpool:
             pass
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
 def _write_import_temp_metadata(path: Path, metadata_path: Path, *, kind: str) -> None:
     metadata_path.write_bytes(
         canonical_json_bytes(
@@ -175,7 +173,7 @@ def _write_import_temp_metadata(path: Path, metadata_path: Path, *, kind: str) -
                 "owner_pid": os.getpid(),
                 "owner_host": socket.gethostname(),
                 "process_start_identity": _process_start_identity(os.getpid()),
-                "created_at": _utc_now(),
+                "created_at": utc_now_iso(),
                 "recover_by": "rebuild_from_content_addressed_checkpoint",
                 "active_generation_eligible": False,
             }
@@ -209,14 +207,6 @@ def _process_start_identity(pid: int) -> str | None:
     return f"ps:{value}" if observed.returncode == 0 and value else None
 
 
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _month_count(first_month: str, last_month: str) -> int:
     try:
         first = datetime.strptime(first_month, "%Y-%m")
@@ -230,13 +220,13 @@ def _month_count(first_month: str, last_month: str) -> int:
 
 
 @lru_cache(maxsize=8)
-def _verified_file_sha256(
+def _verifiedfile_sha256(
     path_text: str, expected: str, size: int, modified_ns: int
 ) -> bool:
     """Hash once per immutable file identity, not on every UI status poll."""
 
     del size, modified_ns
-    return _file_sha256(Path(path_text)) == expected
+    return file_sha256(Path(path_text)) == expected
 
 
 class ResearchDataStore:
@@ -523,7 +513,7 @@ class ResearchDataStore:
                     "generation_id": generation_id,
                     "classification": "vendor_research_trusted",
                     "research_trust_profile": "tushare_research_trusted",
-                    "created_at": _utc_now(),
+                    "created_at": utc_now_iso(),
                     "checkpoint_file": checkpoint_path.name,
                     "warnings": sorted(warnings),
                     "live_eligible": False,
@@ -556,13 +546,13 @@ class ResearchDataStore:
             "schema_version": RESEARCH_GENERATION_SCHEMA,
             "generation_id": generation_id,
             "provider": "tushare",
-            "file_sha256": _file_sha256(target),
+            "file_sha256": file_sha256(target),
             "file_size": target.stat().st_size,
             "file_mtime_ns": target.stat().st_mtime_ns,
             "activated_for": ["exploratory_research", "paper_simulation"],
             "live_eligible": False,
             "research_trust_profile": "tushare_research_trusted",
-            "updated_at": _utc_now(),
+            "updated_at": utc_now_iso(),
         }
         self._atomic_json(self.active_pointer, pointer)
         report = self.status()
@@ -1071,14 +1061,14 @@ class ResearchDataStore:
             "schema_version": RESEARCH_GENERATION_SCHEMA,
             "generation_id": generation_id,
             "provider": "tushare",
-            "file_sha256": _file_sha256(target),
+            "file_sha256": file_sha256(target),
             "file_size": target.stat().st_size,
             "file_mtime_ns": target.stat().st_mtime_ns,
             "activated_for": ["exploratory_research", "paper_simulation"],
             "live_eligible": False,
             "research_trust_profile": trust_profile,
             "candidate_report_sha256": report_sha,
-            "updated_at": _utc_now(),
+            "updated_at": utc_now_iso(),
         }
         # Build the potentially scan-heavy status response before entering the
         # non-cancellable pointer commit window.  The commit tail must stay
@@ -1254,7 +1244,7 @@ class ResearchDataStore:
                 checksum != canonical_sha256(binding)
                 or binding.get("generation_id") != target.stem
                 or binding.get("identity_sha256") != canonical_sha256(identity)
-                or binding.get("file_sha256") != _file_sha256(target)
+                or binding.get("file_sha256") != file_sha256(target)
                 or binding.get("file_size") != target.stat().st_size
             ):
                 raise ResearchDataStoreError("existing research generation binding changed")
@@ -1276,7 +1266,7 @@ class ResearchDataStore:
             "schema_version": "research-generation-binding/v1",
             "generation_id": generation_id,
             "identity_sha256": canonical_sha256(identity),
-            "file_sha256": _file_sha256(file_path),
+            "file_sha256": file_sha256(file_path),
             "file_size": file_path.stat().st_size,
         }
         binding["content_sha256"] = canonical_sha256(binding)
@@ -1482,7 +1472,7 @@ class ResearchDataStore:
                 "generation_id": generation_id,
                 "classification": classification,
                 "research_trust_profile": trust_profile,
-                "created_at": _utc_now(),
+                "created_at": utc_now_iso(),
                 "live_eligible": False,
             }
             connection.executemany(
@@ -1613,7 +1603,7 @@ class ResearchDataStore:
             finally:
                 if connection is not None:
                     connection.close()
-        elif not _verified_file_sha256(
+        elif not _verifiedfile_sha256(
             str(target), expected, metadata.st_size, metadata.st_mtime_ns
         ):
             raise ResearchDataStoreError("research generation digest changed")
@@ -1678,7 +1668,7 @@ class ResearchDataStore:
                 or not isinstance(identity, Mapping)
                 or binding.get("identity_sha256") != canonical_sha256(identity)
                 or binding.get("file_size") != metadata.st_size
-                or not _verified_file_sha256(
+                or not _verifiedfile_sha256(
                     str(target),
                     str(binding.get("file_sha256") or ""),
                     metadata.st_size,
@@ -1719,7 +1709,7 @@ class ResearchDataStore:
             return {"available": False, "verified": False}
         pointer, target = active
         digest_valid = (
-            _file_sha256(target) == pointer["file_sha256"] if deep else True
+            file_sha256(target) == pointer["file_sha256"] if deep else True
         )
         if not digest_valid:
             raise ResearchDataStoreError("research generation digest changed")

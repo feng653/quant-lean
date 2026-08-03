@@ -1,4 +1,5 @@
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import hashlib
 import json
@@ -112,7 +113,7 @@ class FakeReleaseRemote:
     def upload_sparse(self, _config: dict[str, Any], archive: Path) -> None:
         self.uploads += 1
         self.exists = True
-        digest = backup_repository._sha256_file(archive)
+        digest = file_sha256(archive)
         self.assets.append(
             {
                 "id": 1000 + self.uploads,

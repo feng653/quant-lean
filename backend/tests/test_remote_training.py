@@ -12,12 +12,12 @@ import pandas as pd
 import pytest
 
 from backend.db.migrate import migrate_experiment
+from backend.core.hashing import file_sha256
 from backend.services.remote_training import (
     MAX_REPORT_JSON_BYTES,
     RESULT_SCHEMA_VERSION,
     RemoteTrainingError,
     RemoteTrainingService,
-    _file_sha256,
     _persist_snapshot,
 )
 from backend.strategies.base import (
@@ -296,7 +296,7 @@ def test_snapshot_manifest_hash_and_tamper_detection(tmp_path: Path) -> None:
     manifest = asyncio.run(
         service.worker_manifest(task_uuid=task["task_uuid"], token=token)
     )
-    assert manifest["data"]["sha256"] == _file_sha256(path)
+    assert manifest["data"]["sha256"] == file_sha256(path)
     assert manifest["windows"]["lookback_rows"] == 252
     assert manifest["windows"]["label_tail_rows"] == 5
     frame = pd.read_parquet(path)
@@ -410,7 +410,7 @@ def test_concurrent_completion_preserves_winning_artifact(tmp_path: Path) -> Non
         ).fetchone()
     committed_path = Path(artifact_path)
     assert committed_path.is_file()
-    assert _file_sha256(committed_path) == artifact_sha256
+    assert file_sha256(committed_path) == artifact_sha256
     assert list(committed_path.parent.glob("artifact-*.bin")) == [committed_path]
 
 
