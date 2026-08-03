@@ -35,6 +35,15 @@ jobs:
         run: |
           python .github/scripts/check_parallel.py
 
+      - name: Configure git credentials for agent pushes
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "opencode-bot"
+          git config --global user.email "opencode-bot@users.noreply.github.com"
+          git config --global credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+
       - name: Run OpenCode agent
         uses: anomalyco/opencode/github@latest
         env:
