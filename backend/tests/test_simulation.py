@@ -12,7 +12,7 @@ import pytest
 
 from backend.config import settings
 from backend.core.types import SignalItem
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.services import simulation
 from backend.services.research_manifest import canonical_sha256
 from backend.strategies.base import ParamField
@@ -89,7 +89,7 @@ def test_deployed_model_artifact_is_loaded(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
     monkeypatch.setattr(settings, "MODEL_STORE_DIR", str(tmp_path / "models"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
     model_path = tmp_path / "models" / "experiment_1" / "model.joblib"
     model_path.parent.mkdir(parents=True)
@@ -264,7 +264,7 @@ def test_daily_simulation_is_idempotent_and_fills_at_next_open(
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
     monkeypatch.setattr(settings, "DATA_CACHE_DIR", str(tmp_path / "cache"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
     panel = pd.DataFrame(
         {
@@ -431,7 +431,7 @@ def test_identical_running_simulation_cannot_be_claimed_twice(
     monkeypatch.setattr(settings, "USERS_DB", str(tmp_path / "users.db"))
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
     db_path = str(tmp_path / "trading.db")
     with sqlite3.connect(db_path) as connection:

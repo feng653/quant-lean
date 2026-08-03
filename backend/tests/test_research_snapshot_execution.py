@@ -10,7 +10,8 @@ import pytest
 
 from backend.config import settings
 from backend.data.cache import DataCache
-from backend.main import _init_databases, _run_experiment
+from backend.db.init import init_databases
+from backend.execution.backtest_runner import run_experiment
 from backend.services.research_manifest import load_run_manifest
 
 
@@ -36,7 +37,7 @@ def _configure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         "RESEARCH_SNAPSHOT_DIR",
         str(tmp_path / "research-snapshots"),
     )
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     broker = _Broker()
     monkeypatch.setattr("backend.jobs.broker.get_broker", lambda: broker)
     return experiment_db
@@ -104,7 +105,7 @@ def test_worker_rejects_runtime_network_fallback_before_source_construction(
     )
     _forbid_legacy_data_paths(monkeypatch)
 
-    asyncio.run(_run_experiment(1, "reject-network"))
+    asyncio.run(run_experiment(1, "reject-network"))
 
     status, error_log, equity_count = _failure(database)
     assert status == "failed"
@@ -125,7 +126,7 @@ def test_worker_rejects_custom_pool_before_cache_access(
     )
     _forbid_legacy_data_paths(monkeypatch)
 
-    asyncio.run(_run_experiment(1, "reject-custom"))
+    asyncio.run(run_experiment(1, "reject-custom"))
 
     status, error_log, equity_count = _failure(database)
     assert status == "failed"
@@ -153,7 +154,7 @@ def test_worker_rejects_legacy_snapshot_without_pit_runtime_proof(
     )
     _forbid_legacy_data_paths(monkeypatch)
 
-    asyncio.run(_run_experiment(1, "reject-legacy-replay"))
+    asyncio.run(run_experiment(1, "reject-legacy-replay"))
 
     status, error_log, equity_count = _failure(database)
     assert status == "failed"
@@ -174,7 +175,7 @@ def test_worker_without_activated_pit_evidence_fails_closed(
     )
     _forbid_legacy_data_paths(monkeypatch)
 
-    asyncio.run(_run_experiment(1, "reject-missing-evidence"))
+    asyncio.run(run_experiment(1, "reject-missing-evidence"))
 
     status, error_log, equity_count = _failure(database)
     assert status == "failed"

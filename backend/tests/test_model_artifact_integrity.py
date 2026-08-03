@@ -17,7 +17,7 @@ import aiosqlite
 
 from backend.config import settings
 from backend.db.migrate import migrate_trading
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.services import maintenance
 from backend.services import model_artifacts
 from backend.services.model_artifacts import (
@@ -138,7 +138,7 @@ def _configure_databases(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
     monkeypatch.setattr(settings, "MODEL_STORE_DIR", str(tmp_path / "models"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
 
 def _params(*, min_validation_rank_ic: float = 0.02) -> dict[str, Any]:

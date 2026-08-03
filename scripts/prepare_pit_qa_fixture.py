@@ -49,7 +49,7 @@ from backend.data.source_validation import (  # noqa: E402
     build_cache_source_provenance,
     build_daily_fetch_evidence,
 )
-from backend.main import _init_databases  # noqa: E402
+from backend.db.init import init_databases  # noqa: E402
 
 
 CODES = tuple(f"{600001 + index:06d}" for index in range(300))
@@ -175,7 +175,7 @@ def _price_rows(frame: pd.DataFrame) -> list[dict[str, object]]:
 
 
 async def _build(root: Path) -> dict[str, object]:
-    await _init_databases()
+    await init_databases()
     with sqlite3.connect(settings.abs_path(settings.USERS_DB)) as connection:
         connection.execute(
             """

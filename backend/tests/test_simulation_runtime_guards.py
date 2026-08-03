@@ -6,7 +6,7 @@ import sqlite3
 from types import SimpleNamespace
 
 from backend.config import settings
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.services import simulation
 
 
@@ -14,7 +14,7 @@ def _configure_databases(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(settings, "USERS_DB", str(tmp_path / "users.db"))
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
 
 def test_mixed_strict_and_research_deployments_validate_both_bindings(

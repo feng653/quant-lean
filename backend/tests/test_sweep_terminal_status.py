@@ -6,7 +6,7 @@ import asyncio
 
 import aiosqlite
 
-from backend.main import _refresh_related_sweep_status
+from backend.execution.backtest_runner import _refresh_related_sweep_status
 
 
 def test_failed_and_cancelled_members_complete_the_sweep(tmp_path) -> None:

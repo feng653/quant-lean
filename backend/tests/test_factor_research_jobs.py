@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from backend import main
+from backend.jobs.handlers import execute_job
 from backend.jobs import broker as broker_module
 from backend.jobs.broker import JobBroker
 from backend.services import factor_research
@@ -66,7 +66,7 @@ def test_factor_worker_uses_job_owner_and_persists_only_result_digests(
         job = await broker.get_job_status(job_id)
         assert job is not None
 
-        await main._execute_job(job)
+        await execute_job(job)
 
         completed = await broker.get_job_status(job_id)
         assert completed is not None
@@ -118,7 +118,7 @@ def test_factor_worker_records_safe_structured_failure(
         job = await broker.get_job_status(job_id)
         assert job is not None
 
-        await main._execute_job(job)
+        await execute_job(job)
 
         failed = await broker.get_job_status(job_id)
         assert failed is not None
