@@ -1,7 +1,7 @@
 """Immutable, user-isolated preregistration protocols for factor research."""
 
 from __future__ import annotations
-from backend.core.timeutils import utc_now_iso
+from backend.core.timeutils import utc_now_z
 
 import hashlib
 import json
@@ -197,7 +197,7 @@ class FactorResearchProtocolStore:
         payload: Mapping[str, Any],
     ) -> dict[str, Any]:
         protocol_id = "fproto_" + uuid.uuid4().hex
-        now = utc_now_iso()
+        now = utc_now_z()
         payload_json = _canonical_json(payload)
         payload_digest = _digest(payload_json)
         with self._connect() as connection:
@@ -235,7 +235,7 @@ class FactorResearchProtocolStore:
     ) -> dict[str, Any]:
         payload_json = _canonical_json(payload)
         payload_digest = _digest(payload_json)
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             series = connection.execute(
@@ -332,7 +332,7 @@ class FactorResearchProtocolStore:
                     SET status = 'locked', locked_at = ?
                     WHERE protocol_id = ? AND version = ? AND status = 'draft'
                     """,
-                    (utc_now_iso(), protocol_id, version),
+                    (utc_now_z(), protocol_id, version),
                 )
         return self.get_version(
             owner_user_id=owner_user_id,

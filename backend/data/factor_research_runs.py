@@ -1,7 +1,7 @@
 """Durable, immutable and user-isolated factor research run records."""
 
 from __future__ import annotations
-from backend.core.timeutils import utc_now_iso
+from backend.core.timeutils import utc_now_z
 
 import hashlib
 import json
@@ -256,7 +256,7 @@ class FactorResearchRunStore:
             ).hexdigest()
         )
         run_id = "frun_" + uuid.uuid4().hex
-        created_at = utc_now_iso()
+        created_at = utc_now_z()
         run_digest = _run_digest(
             run_id=run_id,
             owner_user_id=owner_user_id,
@@ -593,7 +593,7 @@ class FactorResearchRunStore:
         )
 
     def archive(self, *, owner_user_id: int, run_id: str) -> bool:
-        archived_at = utc_now_iso()
+        archived_at = utc_now_z()
         with self._connect() as connection:
             cursor = connection.execute(
                 """

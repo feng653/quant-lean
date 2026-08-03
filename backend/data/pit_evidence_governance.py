@@ -6,7 +6,7 @@ to an immutable staging package and records compare-and-swap decisions.
 """
 
 from __future__ import annotations
-from backend.core.timeutils import utc_now_iso
+from backend.core.timeutils import utc_now_z
 
 import base64
 import binascii
@@ -832,7 +832,7 @@ class PitEvidenceGovernance:
                 int(actor_user_id),
                 event_json,
                 hashlib.sha256(event_json.encode()).hexdigest(),
-                utc_now_iso(),
+                utc_now_z(),
             ),
         )
 
@@ -1592,7 +1592,7 @@ class PitEvidenceGovernance:
             }
         package_id = "pitpkg_" + package_sha256[:32]
         package_json = _canonical_json(package)
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._validate_auxiliary_registrations(
@@ -1818,7 +1818,7 @@ class PitEvidenceGovernance:
                 (
                     expected_sha256,
                     result["size_bytes"],
-                    utc_now_iso(),
+                    utc_now_z(),
                     int(actor_user_id),
                 ),
             )
@@ -1835,7 +1835,7 @@ class PitEvidenceGovernance:
                         kind,
                         provenance_json,
                         provenance_sha256,
-                        utc_now_iso(),
+                        utc_now_z(),
                         int(actor_user_id),
                     ),
                 )
@@ -1889,7 +1889,7 @@ class PitEvidenceGovernance:
                     (
                         digest,
                         result["size_bytes"],
-                        utc_now_iso(),
+                        utc_now_z(),
                         int(actor_user_id),
                     ),
                 )
@@ -2062,7 +2062,7 @@ class PitEvidenceGovernance:
             if normalized_attestations is not None
             else None
         )
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             if decision == "approved":
@@ -2228,7 +2228,7 @@ class PitEvidenceGovernance:
                     "scope_id": document["scope_id"],
                     "batch_id": result["batch_id"],
                     "batch_digest": result["batch_digest"],
-                    "imported_at": utc_now_iso(),
+                    "imported_at": utc_now_z(),
                 }
                 existing_receipt = connection.execute(
                     """
@@ -2291,7 +2291,7 @@ class PitEvidenceGovernance:
                 result = self.get_package(package_id)
                 result["idempotent"] = True
                 return result
-            now = utc_now_iso()
+            now = utc_now_z()
             cursor = connection.execute(
                 """
                 UPDATE pit_evidence_packages

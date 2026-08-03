@@ -26,6 +26,14 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def utc_now_z() -> str:
+    """Current UTC time with ``Z`` suffix（历史 Z 版 _utc_now 输出兼容）。
+
+    输出形如 ``2026-08-03T13:45:37.123456Z``（微秒为 0 时省略，与 isoformat 一致）。
+    """
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def to_iso_utc(value: datetime | None = None) -> str:
     """Serialize a datetime to UTC ISO-8601 with Z suffix.
 

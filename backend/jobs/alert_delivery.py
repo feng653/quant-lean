@@ -187,7 +187,7 @@ def queue_slo_alert_delivery(
     """
     if transition not in _TRANSITIONS:
         raise ValueError("invalid alert transition")
-    current = now or utc_now()
+    current = now or utc_now().replace(microsecond=0)
     current_text = _timestamp(current)
     retention_hours = max(
         min(int(settings.JOB_OBSERVABILITY_RETENTION_HOURS), 24 * 31), 1

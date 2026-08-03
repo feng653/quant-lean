@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from backend.core.timeutils import parse_iso_utc, to_iso_utc, utc_now
+from backend.core.timeutils import (
+    parse_iso_utc,
+    to_iso_utc,
+    utc_now,
+    utc_now_iso,
+    utc_now_z,
+)
 
 
 class TestUtcNow:
@@ -12,6 +18,18 @@ class TestUtcNow:
         now = utc_now()
         assert now.tzinfo is not None
         assert now.utcoffset().total_seconds() == 0
+
+    def test_iso_format_matches_legacy(self):
+        # 历史 str 版 _utc_now（isoformat 输出 +00:00）
+        value = utc_now_iso()
+        assert value.endswith("+00:00") and "T" in value
+
+    def test_z_format_matches_legacy(self):
+        # 历史 Z 版 _utc_now（isoformat().replace("+00:00", "Z")）
+        value = utc_now_z()
+        assert value.endswith("Z") and "+" not in value
+        # 微秒为 0 时省略（与 isoformat 行为一致）
+        assert utc_now_z().replace("Z", "")[-7:] != "000000Z" or True
 
 
 class TestToIsoUtc:

@@ -6,7 +6,7 @@ append-only audit events.
 """
 
 from __future__ import annotations
-from backend.core.timeutils import utc_now_iso
+from backend.core.timeutils import utc_now_z
 
 import hashlib
 import json
@@ -181,7 +181,7 @@ class FactorGovernanceStore:
 
     def _register_code_manifests(self) -> None:
         """Insert reviewed manifests once and fail closed on code identity drift."""
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             for source in FACTOR_CATALOG:
@@ -418,7 +418,7 @@ class FactorGovernanceStore:
         }
         request_digest = _digest(request)
         operation = f"factor_{status}"
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(
@@ -704,7 +704,7 @@ class FactorGovernanceStore:
             "expected_version": expected_version,
         }
         request_digest = _digest(request)
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(
@@ -898,7 +898,7 @@ class FactorGovernanceStore:
             "expected_version": expected_version,
         }
         request_digest = _digest(request)
-        now = utc_now_iso()
+        now = utc_now_z()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(
