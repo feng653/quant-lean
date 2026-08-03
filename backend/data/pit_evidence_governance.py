@@ -17,7 +17,7 @@ import re
 import sqlite3
 import stat
 import uuid
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Iterable, Literal, Mapping, Sequence
 

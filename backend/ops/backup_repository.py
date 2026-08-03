@@ -12,7 +12,6 @@ from backend.core.hashing import file_sha256
 
 import argparse
 import fcntl
-import hashlib
 import json
 import os
 import re
@@ -21,7 +20,6 @@ import stat
 import subprocess
 import tempfile
 from collections.abc import Callable, Iterable, Sequence
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 

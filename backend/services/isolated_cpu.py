@@ -10,7 +10,6 @@ from __future__ import annotations
 from backend.core.hashing import file_sha256
 
 import asyncio
-import hashlib
 import os
 import pickle
 import shutil

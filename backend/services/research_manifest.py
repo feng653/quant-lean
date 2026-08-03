@@ -851,7 +851,7 @@ async def append_artifact_manifest(
     """Append a hash-only supplement; never mutate the initial manifest."""
     path = Path(artifact_path)
     size = path.stat().st_size
-    sha256 = await asyncio.to_thread(_file_sha256, path)
+    sha256 = await asyncio.to_thread(file_sha256, path)
     safe_metadata = dict(metadata or {})
     _assert_safe_manifest_value(safe_metadata)
     metadata_json = canonical_json_bytes(safe_metadata).decode("utf-8")

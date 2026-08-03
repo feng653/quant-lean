@@ -19,7 +19,7 @@ import os
 import re
 import time
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal, Mapping, Sequence
 from urllib.parse import unquote, urlparse

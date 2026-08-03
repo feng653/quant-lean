@@ -139,9 +139,6 @@ def _validate_for_loader(strategy: Any, serialization: object) -> str:
         raise ModelArtifactIntegrityError(str(exc)) from exc
 
 
-def file_sha256(path: Path) -> str:
-    with path.open("rb") as model_file:
-        return hashlib.file_digest(model_file, "sha256").hexdigest()
 
 
 async def verify_model_file(
