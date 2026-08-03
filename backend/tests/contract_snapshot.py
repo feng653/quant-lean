@@ -456,10 +456,26 @@ _VOLATILE_ENDPOINTS = frozenset({
 })
 
 
+_IDENTITY_KEYS = (
+    "strategy_id", "adapter_id", "pool_id", "code", "key", "id",
+    "experiment_id", "job_id", "deployment_id", "name", "username",
+)
+
+
+def _identity_key(value: dict) -> str | None:
+    for k in _IDENTITY_KEYS:
+        if k in value:
+            return k
+    return None
+
+
 def _normalize_value(value: Any, key: str | None = None) -> Any:
     if isinstance(value, dict):
         return {k: _normalize_value(v, k) for k, v in value.items()}
     if isinstance(value, list):
+        if value and all(isinstance(v, dict) and _identity_key(v) for v in value):
+            ik = _identity_key(value[0])
+            value = sorted(value, key=lambda v: str(v[ik]))
         return [_normalize_value(v, key) for v in value]
     if isinstance(value, str):
         if _RE_JWT.match(value):
