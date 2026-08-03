@@ -27,7 +27,9 @@ from backend.api.experiments import CreateExperimentBody, create_experiment  # n
 from backend.api.trading import CreateDeploymentBody, create_deployment  # noqa: E402
 from backend.config import settings  # noqa: E402
 from backend.data.cache import DataCache, has_price_field  # noqa: E402
-from backend.main import _init_databases, _run_experiment, _scan_strategies  # noqa: E402
+from backend.db.init import init_databases  # noqa: E402
+from backend.execution.backtest_runner import run_experiment  # noqa: E402
+from backend.strategies.startup import scan_strategies  # noqa: E402
 from backend.services.model_artifacts import verify_model_file  # noqa: E402
 from backend.strategies.registry import get_registry  # noqa: E402
 
@@ -288,7 +290,7 @@ async def _create_and_run(
         f"candidate={candidate_id} rank={rank}",
         flush=True,
     )
-    await _run_experiment(experiment_id, job_id)
+    await run_experiment(experiment_id, job_id)
     return experiment_id, job_id
 
 
@@ -358,8 +360,8 @@ async def main() -> None:
     parser.add_argument("--report", type=Path, default=FINAL_REPORT)
     args = parser.parse_args()
 
-    await _init_databases()
-    await _scan_strategies()
+    await init_databases()
+    await scan_strategies()
     tuning = _load_json(args.tuning_report)
     registry_ids = sorted(item.strategy_id for item in get_registry().list_all())
     selected = args.strategies or [

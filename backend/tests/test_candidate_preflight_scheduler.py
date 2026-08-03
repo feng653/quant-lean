@@ -398,7 +398,7 @@ def test_enabled_scheduler_runs_initial_scan_and_stops_cleanly(
 def test_formal_job_worker_dispatch_executes_candidate_preflight(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from backend import main as main_module
+    from backend.jobs.handlers import execute_job
     from backend.jobs import broker as broker_module
 
     class ExecutionBroker:
@@ -424,7 +424,7 @@ def test_formal_job_worker_dispatch_executes_candidate_preflight(
         datetime(2026, 8, 2, 10, 15, tzinfo=UTC)
     )
     asyncio.run(
-        main_module._execute_job(
+        execute_job(
             {
                 "job_uuid": "a" * 32,
                 "job_type": "candidate_data_preflight",
@@ -442,7 +442,7 @@ def test_formal_job_worker_dispatch_executes_candidate_preflight(
 def test_formal_worker_persists_deferred_terminal_semantics(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from backend import main as main_module
+    from backend.jobs.handlers import execute_job
     from backend.jobs import broker as broker_module
 
     class ExecutionBroker:
@@ -468,7 +468,7 @@ def test_formal_worker_persists_deferred_terminal_semantics(
 
     monkeypatch.setattr(scheduler, "run_candidate_preflight_job", execute)
     asyncio.run(
-        main_module._execute_job(
+        execute_job(
             {
                 "job_uuid": "c" * 32,
                 "job_type": "candidate_data_preflight",
@@ -488,7 +488,7 @@ def test_formal_worker_persists_deferred_terminal_semantics(
 def test_formal_worker_persists_structured_failure_before_raising(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from backend import main as main_module
+    from backend.jobs.handlers import execute_job
     from backend.jobs import broker as broker_module
 
     class ExecutionBroker:
@@ -521,7 +521,7 @@ def test_formal_worker_persists_structured_failure_before_raising(
     monkeypatch.setattr(scheduler, "run_candidate_preflight_job", execute)
     with pytest.raises(scheduler.CandidatePreflightJobError):
         asyncio.run(
-            main_module._execute_job(
+            execute_job(
                 {
                     "job_uuid": "d" * 32,
                     "job_type": "candidate_data_preflight",

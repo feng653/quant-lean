@@ -18,7 +18,7 @@ from backend.data.cache import (
     LegacyAdjustedCacheError,
 )
 from backend.dependencies import get_current_user
-from backend.main import _init_databases
+from backend.db.init import init_databases
 
 
 @pytest.fixture()
@@ -234,7 +234,7 @@ def test_portfolio_calendar_does_not_fallback_for_unavailable_portfolio(
     monkeypatch.setattr(settings, "USERS_DB", str(tmp_path / "users.db"))
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     with sqlite3.connect(tmp_path / "trading.db") as connection:
         portfolio_id = connection.execute(
             """
@@ -263,7 +263,7 @@ def test_legacy_portfolio_calendar_uses_strict_runtime_gate(
     monkeypatch.setattr(settings, "USERS_DB", str(tmp_path / "users.db"))
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(tmp_path / "experiment.db"))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     with sqlite3.connect(tmp_path / "trading.db") as connection:
         deployment_id = connection.execute(
             """

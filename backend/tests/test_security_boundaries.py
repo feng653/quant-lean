@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from backend.api import experiments as experiments_api
 from backend.api import trading as trading_api
 from backend.config import settings
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.strategies.base import (
     RetrainFrequency,
     StrategyCategory,
@@ -75,7 +75,7 @@ def _configure_databases(tmp_path, monkeypatch) -> None:
         "TRADING_SIM_DB",
         str(tmp_path / "trading.db"),
     )
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
 
 def test_deployment_rejects_detached_artifact_and_frequency_mismatch(

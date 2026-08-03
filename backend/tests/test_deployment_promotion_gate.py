@@ -17,7 +17,7 @@ from backend.data.cache import (
     LegacyAdjustedCacheError,
 )
 from backend.data.generation_manifest import GenerationManifestError
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.services import deployment_promotion, simulation
 from backend.services.experiment_eligibility import (
     ExperimentEligibility,
@@ -90,7 +90,7 @@ def _configure_databases(tmp_path, monkeypatch) -> None:
         "TRADING_SIM_DB",
         str(tmp_path / "trading.db"),
     )
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
 
 
 def _binding(promotion_id: int = 5) -> dict:

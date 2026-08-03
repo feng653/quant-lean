@@ -21,7 +21,8 @@ from backend.data.point_in_time_master import (
     _authorize_governed_import,
     _digest,
 )
-from backend.main import _init_databases, _run_experiment
+from backend.db.init import init_databases
+from backend.execution.backtest_runner import run_experiment
 from backend.dependencies import get_current_user, get_strategy_registry
 from backend.services.research_manifest import load_run_manifest
 
@@ -133,7 +134,7 @@ def test_three_frontend_equivalent_strategy_runs_bind_only_isolated_pit_fixture(
         "RESEARCH_SNAPSHOT_DIR",
         str(tmp_path / "research_snapshots"),
     )
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     codes = [f"{index:06d}" for index in range(1, 301)]
     _activate_membership_fixture(experiment_db, codes)
     research_frame = _market_fixture(codes)
@@ -236,7 +237,7 @@ def test_three_frontend_equivalent_strategy_runs_bind_only_isolated_pit_fixture(
 
     assert len(broker.submissions) == 3
     for experiment_id in experiment_ids:
-        asyncio.run(_run_experiment(experiment_id, f"fixture-{experiment_id}"))
+        asyncio.run(run_experiment(experiment_id, f"fixture-{experiment_id}"))
 
     with sqlite3.connect(experiment_db) as connection:
         statuses = connection.execute(

@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from backend.api import experiments as experiments_api
 from backend.config import settings
 from backend.db.migrate import migrate_experiment
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.jobs.broker import JobBroker
 from backend.services import research_runtime
 from backend.services.experiment_eligibility import ExperimentEligibility
@@ -66,7 +66,7 @@ def _configure(tmp_path, monkeypatch) -> _RecordingBroker:
         "TRADING_SIM_DB",
         str(tmp_path / "trading.db"),
     )
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     monkeypatch.setattr(
         "backend.dependencies.get_strategy_registry",
         lambda: _Registry(),

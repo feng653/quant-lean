@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import pytest
 from starlette.responses import Response
 
-import backend.main as main_module
+import backend.jobs.worker as worker_module
+from backend.main import health_check
 from backend.jobs.broker import JobBroker
 
 
@@ -23,9 +24,9 @@ def test_job_worker_supervisor_restarts_with_a_finite_crash_budget(
             calls += 1
             raise RuntimeError("worker boom")
 
-        monkeypatch.setattr(main_module, "_job_worker", crashing_worker)
+        monkeypatch.setattr(worker_module, "job_worker", crashing_worker)
         with pytest.raises(RuntimeError, match="exhausted its restart budget"):
-            await main_module._supervise_job_worker(
+            await worker_module.supervise_job_worker(
                 max_attempts=3,
                 retry_base_seconds=0,
             )
@@ -51,12 +52,12 @@ def test_job_worker_supervisor_resets_budget_after_a_stable_run(
 
         monotonic_values = iter((0.0, 0.1, 1.0, 3.0, 4.0))
         monkeypatch.setattr(
-            main_module,
-            "_job_worker",
+            worker_module,
+            "job_worker",
             intermittently_crashing_worker,
         )
         task = asyncio.create_task(
-            main_module._supervise_job_worker(
+            worker_module.supervise_job_worker(
                 max_attempts=2,
                 retry_base_seconds=0,
                 stable_run_seconds=1,
@@ -86,9 +87,9 @@ def test_job_worker_supervisor_shutdown_cancels_active_worker(
             finally:
                 stopped.set()
 
-        monkeypatch.setattr(main_module, "_job_worker", active_worker)
+        monkeypatch.setattr(worker_module, "job_worker", active_worker)
         task = asyncio.create_task(
-            main_module._supervise_job_worker(
+            worker_module.supervise_job_worker(
                 max_attempts=3,
                 retry_base_seconds=0,
             )
@@ -114,7 +115,7 @@ def test_critical_background_task_health_reports_stopped_components() -> None:
         )
     )
 
-    assert main_module._stopped_critical_background_tasks(fake_app) == [
+    assert worker_module.stopped_critical_background_tasks(fake_app) == [
         "job_worker"
     ]
 
@@ -129,7 +130,7 @@ def test_health_endpoint_returns_503_after_critical_task_stops() -> None:
             )
         )
         response = Response()
-        payload = await main_module.health_check(
+        payload = await health_check(
             SimpleNamespace(app=fake_app),  # type: ignore[arg-type]
             response,
         )
@@ -180,7 +181,7 @@ def test_shutdown_cleans_all_tasks_and_broker_after_worker_crash(
         assert worker_task.done()
         broker = Broker()
 
-        await main_module._shutdown_background_runtime(
+        await worker_module.shutdown_background_runtime(
             {
                 "job_worker": worker_task,
                 "paper_simulation_scheduler": scheduler_task,
@@ -216,7 +217,7 @@ def test_health_uses_in_memory_heartbeat_with_grace_and_standby() -> None:
             )
         )
         response = Response()
-        payload = await main_module.health_check(
+        payload = await health_check(
             SimpleNamespace(app=fake_app),  # type: ignore[arg-type]
             response,
         )
@@ -278,7 +279,7 @@ def test_health_returns_503_only_while_an_active_claim_lease_is_expired(
         )
 
         live_response = Response()
-        live_payload = await main_module.health_check(
+        live_payload = await health_check(
             SimpleNamespace(app=fake_app),  # type: ignore[arg-type]
             live_response,
         )
@@ -297,7 +298,7 @@ def test_health_returns_503_only_while_an_active_claim_lease_is_expired(
             )
             conn.commit()
         stale_response = Response()
-        stale_payload = await main_module.health_check(
+        stale_payload = await health_check(
             SimpleNamespace(app=fake_app),  # type: ignore[arg-type]
             stale_response,
         )
@@ -313,7 +314,7 @@ def test_health_returns_503_only_while_an_active_claim_lease_is_expired(
 
         await broker.recover_expired_claims()
         recovered_response = Response()
-        recovered_payload = await main_module.health_check(
+        recovered_payload = await health_check(
             SimpleNamespace(app=fake_app),  # type: ignore[arg-type]
             recovered_response,
         )

@@ -11,7 +11,9 @@ from fastapi.testclient import TestClient
 from backend.config import settings
 from backend.jobs import broker as broker_module
 from backend.jobs.broker import JobBroker
-from backend.main import _init_databases, _scan_strategies, app
+from backend.db.init import init_databases
+from backend.main import app
+from backend.strategies.startup import scan_strategies
 from backend.services.research_manifest import canonical_sha256
 from backend.services.experiment_eligibility import ExperimentEligibility
 
@@ -155,8 +157,8 @@ def client(tmp_path, monkeypatch):
         "_broker_instance",
         JobBroker(str(tmp_path / "jobs.db")),
     )
-    asyncio.run(_init_databases())
-    asyncio.run(_scan_strategies())
+    asyncio.run(init_databases())
+    asyncio.run(scan_strategies())
     test_client = TestClient(app)
     yield test_client
     test_client.close()

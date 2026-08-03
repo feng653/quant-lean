@@ -18,10 +18,10 @@ from backend.data.cache import DataCache, LegacyRuntimeDataDisabledError
 from backend.data.cache_readiness import CachedMarketData
 from backend.data import pit_runtime
 from backend.dependencies import get_current_user, get_strategy_registry
-from backend import main
-from backend.main import _init_databases
+from backend.db.init import init_databases
 from backend.jobs import broker as broker_module
 from backend.jobs.broker import JobBroker
+from backend.jobs.handlers import execute_job
 from backend.jobs.scheduler import AdaptiveJobScheduler
 from backend.services import maintenance
 
@@ -135,7 +135,7 @@ def test_http_experiment_without_real_pit_binding_is_409_and_not_queued(
     monkeypatch.setattr(settings, "EXPERIMENT_DB", str(experiment_db))
     monkeypatch.setattr(settings, "TRADING_SIM_DB", str(tmp_path / "trading.db"))
     monkeypatch.setattr(settings, "DATA_CACHE_DIR", str(tmp_path / "empty-cache"))
-    asyncio.run(_init_databases())
+    asyncio.run(init_databases())
     get_strategy_registry().scan_directory(Path(__file__).resolve().parents[1] / "strategies")
 
     class Broker:
@@ -404,7 +404,7 @@ def test_blocked_market_data_job_reaches_failed_terminal_with_structured_reason(
         job = await broker.get_job_status(job_id)
         assert job is not None
 
-        scheduler = AdaptiveJobScheduler(broker, main._execute_job)
+        scheduler = AdaptiveJobScheduler(broker, execute_job)
         await scheduler._execute_claim(
             job,
             "test-worker",

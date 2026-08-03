@@ -15,8 +15,8 @@ import aiosqlite
 
 async def run_experiment_direct(name, strategy_id, params, pool_id, test_start, test_end):
     """Run backtest and save results directly."""
-    from backend.main import _init_databases
-    await _init_databases()
+    from backend.db.init import init_databases
+    await init_databases()
 
     # Load data
     cache_path = settings.abs_path(f"data/cache/daily/{pool_id}.parquet")
