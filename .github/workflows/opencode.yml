@@ -15,6 +15,7 @@ jobs:
       contains(github.event.comment.body, '/opencode') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     permissions:
       id-token: write
       contents: write
@@ -39,6 +40,8 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CI runner 是一次性环境：允许所有权限，避免非交互模式在权限询问处挂死
+          OPENCODE_PERMISSION: '{"bash":{"*":"allow"},"edit":"allow","read":"allow","webfetch":"allow","glob":"allow","grep":"allow"}'
         with:
           use_github_token: true
           model: ${{ vars.AGENT_MODEL || 'deepseek/deepseek-v4-flash' }}
