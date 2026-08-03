@@ -7,6 +7,7 @@ and checks GitHub's server-side asset digest after upload and before download.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 from backend.core.hashing import file_sha256
 
 import argparse
@@ -41,10 +42,6 @@ _HAS_POSIX_PERMISSION_SECURITY = os.name == "posix"
 
 class RepositoryBackupError(RuntimeError):
     """Raised when a remote backup cannot satisfy its safety contract."""
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -248,7 +245,7 @@ def configure_repository(
         "release_tag": _RELEASE_TAG,
         "retention_count": retention_count,
         "private_verified": True,
-        "private_verified_at": _utc_now(),
+        "private_verified_at": utc_now_iso(),
     }
     descriptor, temporary_name = tempfile.mkstemp(prefix=".backup-repo-", dir=parent)
     temporary = Path(temporary_name)
@@ -508,7 +505,7 @@ def sync_archive(
     verifier: Callable[[str, str], None] = verify_private_github_repository,
 ) -> dict[str, Any]:
     """Idempotently upload one encrypted archive as a private Release asset."""
-    started_at = _utc_now()
+    started_at = utc_now_iso()
     archive_name = archive_path.name
     try:
         archive = _validate_archive(archive_path)
@@ -538,7 +535,7 @@ def sync_archive(
             "operation": "encrypted_release_upload",
             "status": "uploaded",
             "started_at": started_at,
-            "completed_at": _utc_now(),
+            "completed_at": utc_now_iso(),
             "repository": f"github.com/{config['owner']}/{config['repository']}",
             "release_tag": config["release_tag"],
             "archive_name": archive.name,
@@ -556,7 +553,7 @@ def sync_archive(
             "operation": "encrypted_release_upload",
             "status": "failed",
             "started_at": started_at,
-            "completed_at": _utc_now(),
+            "completed_at": utc_now_iso(),
             "archive_name": archive_name,
             "local_archive_retained": archive_path.exists(),
             "error": error,
@@ -602,7 +599,7 @@ def download_verified_archive(
     verifier: Callable[[str, str], None] = verify_private_github_repository,
 ) -> tuple[Path, dict[str, Any]]:
     """Download a Release asset and verify it before publishing for restore."""
-    started_at = _utc_now()
+    started_at = utc_now_iso()
     if not _ARCHIVE_RE.fullmatch(archive_name):
         raise RepositoryBackupError("encrypted backup archive name is invalid")
     config = load_config(config_path)
@@ -656,7 +653,7 @@ def download_verified_archive(
         "operation": "encrypted_release_download_verify",
         "status": "verified",
         "started_at": started_at,
-        "completed_at": _utc_now(),
+        "completed_at": utc_now_iso(),
         "repository": f"github.com/{config['owner']}/{config['repository']}",
         "release_tag": config["release_tag"],
         "archive_name": archive_name,

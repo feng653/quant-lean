@@ -1,6 +1,7 @@
 """Durable background-job queue backed by SQLite."""
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 
 import asyncio
 import contextvars
@@ -184,10 +185,6 @@ def _is_sqlite_busy(error: BaseException) -> bool:
         return True
     message = str(error).lower()
     return "database is locked" in message or "database table is locked" in message
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _job_priority(job_type: str, params: dict[str, Any]) -> int:
@@ -495,7 +492,7 @@ def _reconcile_backtest_experiment(
     optional_values = {
         "progress_message": message,
         "progress_pct": 0 if status == "pending" else 100,
-        "completed_at": None if status == "pending" else _utc_now(),
+        "completed_at": None if status == "pending" else utc_now_iso(),
         "error_log": None,
     }
     for column, value in optional_values.items():
@@ -3466,11 +3463,11 @@ class JobBroker:
         self._scheduler_status.update(status)
 
     def mark_worker_started(self) -> None:
-        self._worker_started_at = _utc_now()
+        self._worker_started_at = utc_now_iso()
         self.mark_worker_heartbeat()
 
     def mark_worker_heartbeat(self) -> None:
-        self._worker_heartbeat_at = _utc_now()
+        self._worker_heartbeat_at = utc_now_iso()
         self._worker_heartbeat_monotonic = time.monotonic()
 
     def mark_worker_stopped(self) -> None:

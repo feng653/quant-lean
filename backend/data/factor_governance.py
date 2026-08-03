@@ -6,6 +6,7 @@ append-only audit events.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 
 import hashlib
 import json
@@ -45,10 +46,6 @@ def _canonical_json(value: Any) -> str:
 
 def _digest(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class FactorGovernanceError(ValueError):
@@ -185,7 +182,7 @@ class FactorGovernanceStore:
 
     def _register_code_manifests(self) -> None:
         """Insert reviewed manifests once and fail closed on code identity drift."""
-        now = _utc_now()
+        now = utc_now_iso()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             for source in FACTOR_CATALOG:
@@ -422,7 +419,7 @@ class FactorGovernanceStore:
         }
         request_digest = _digest(request)
         operation = f"factor_{status}"
-        now = _utc_now()
+        now = utc_now_iso()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(
@@ -708,7 +705,7 @@ class FactorGovernanceStore:
             "expected_version": expected_version,
         }
         request_digest = _digest(request)
-        now = _utc_now()
+        now = utc_now_iso()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(
@@ -902,7 +899,7 @@ class FactorGovernanceStore:
             "expected_version": expected_version,
         }
         request_digest = _digest(request)
-        now = _utc_now()
+        now = utc_now_iso()
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             replay = self._replay(

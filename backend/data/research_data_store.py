@@ -6,6 +6,7 @@ research while preserving its limitations; it can never authorize live use.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 from backend.core.hashing import file_sha256
 
 import hashlib
@@ -162,10 +163,6 @@ class _ResearchRowSpool:
             pass
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
 def _write_import_temp_metadata(path: Path, metadata_path: Path, *, kind: str) -> None:
     metadata_path.write_bytes(
         canonical_json_bytes(
@@ -176,7 +173,7 @@ def _write_import_temp_metadata(path: Path, metadata_path: Path, *, kind: str) -
                 "owner_pid": os.getpid(),
                 "owner_host": socket.gethostname(),
                 "process_start_identity": _process_start_identity(os.getpid()),
-                "created_at": _utc_now(),
+                "created_at": utc_now_iso(),
                 "recover_by": "rebuild_from_content_addressed_checkpoint",
                 "active_generation_eligible": False,
             }
@@ -516,7 +513,7 @@ class ResearchDataStore:
                     "generation_id": generation_id,
                     "classification": "vendor_research_trusted",
                     "research_trust_profile": "tushare_research_trusted",
-                    "created_at": _utc_now(),
+                    "created_at": utc_now_iso(),
                     "checkpoint_file": checkpoint_path.name,
                     "warnings": sorted(warnings),
                     "live_eligible": False,
@@ -555,7 +552,7 @@ class ResearchDataStore:
             "activated_for": ["exploratory_research", "paper_simulation"],
             "live_eligible": False,
             "research_trust_profile": "tushare_research_trusted",
-            "updated_at": _utc_now(),
+            "updated_at": utc_now_iso(),
         }
         self._atomic_json(self.active_pointer, pointer)
         report = self.status()
@@ -1071,7 +1068,7 @@ class ResearchDataStore:
             "live_eligible": False,
             "research_trust_profile": trust_profile,
             "candidate_report_sha256": report_sha,
-            "updated_at": _utc_now(),
+            "updated_at": utc_now_iso(),
         }
         # Build the potentially scan-heavy status response before entering the
         # non-cancellable pointer commit window.  The commit tail must stay
@@ -1475,7 +1472,7 @@ class ResearchDataStore:
                 "generation_id": generation_id,
                 "classification": classification,
                 "research_trust_profile": trust_profile,
-                "created_at": _utc_now(),
+                "created_at": utc_now_iso(),
                 "live_eligible": False,
             }
             connection.executemany(

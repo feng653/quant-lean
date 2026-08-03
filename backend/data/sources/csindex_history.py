@@ -9,6 +9,7 @@ archive and proposal hashes.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 
 import asyncio
 import hashlib
@@ -126,10 +127,6 @@ def _canonical_json(value: Any) -> str:
 
 def _canonical_sha256(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value).encode()).hexdigest()
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _atomic_json(path: Path, value: Any) -> None:
@@ -964,8 +961,8 @@ class CsindexHistoryWorkflow:
         self._state = {
             "schema_version": HISTORY_RUN_SCHEMA_VERSION,
             "configuration": configuration,
-            "created_at": _utc_now(),
-            "updated_at": _utc_now(),
+            "created_at": utc_now_iso(),
+            "updated_at": utc_now_iso(),
             "anchors": {},
             "archive_pages": {},
             "archive_snapshot": None,
@@ -975,7 +972,7 @@ class CsindexHistoryWorkflow:
         self._save_state()
 
     def _save_state(self) -> None:
-        self._state["updated_at"] = _utc_now()
+        self._state["updated_at"] = utc_now_iso()
         _atomic_json(self.checkpoint_path, self._state)
 
     async def _retry(
@@ -994,7 +991,7 @@ class CsindexHistoryWorkflow:
                     "attempt": attempt,
                     "last_error_type": type(exc).__name__,
                     "last_error": str(exc)[:500],
-                    "failed_at": _utc_now(),
+                    "failed_at": utc_now_iso(),
                 }
                 self._save_state()
                 if isinstance(exc, CsindexPermanentEvidenceError):
@@ -1004,7 +1001,7 @@ class CsindexHistoryWorkflow:
                 continue
             self._state["attempts"][label] = {
                 "attempt": attempt,
-                "completed_at": _utc_now(),
+                "completed_at": utc_now_iso(),
             }
             self._save_state()
             return result
@@ -1225,7 +1222,7 @@ class CsindexHistoryWorkflow:
                 except CsindexHistoryError as exc:
                     record.setdefault("collection_errors", {})["detail"] = {
                         "error": str(exc)[:500],
-                        "recorded_at": _utc_now(),
+                        "recorded_at": utc_now_iso(),
                     }
                     self._save_state()
                     continue
@@ -1260,7 +1257,7 @@ class CsindexHistoryWorkflow:
                 except CsindexHistoryError as exc:
                     record.setdefault("collection_errors", {})[url] = {
                         "error": str(exc)[:500],
-                        "recorded_at": _utc_now(),
+                        "recorded_at": utc_now_iso(),
                     }
                     self._save_state()
                     continue
@@ -1454,7 +1451,7 @@ class CsindexHistoryWorkflow:
         archive_review_digest = _canonical_sha256(archive_review_rows)
         queue = {
             "schema_version": REVIEW_QUEUE_SCHEMA_VERSION,
-            "generated_at": _utc_now(),
+            "generated_at": utc_now_iso(),
             "requested_from": requested_from.isoformat(),
             "official_anchor_on": observed_on.isoformat(),
             "archive_manifest_sha256": archive_review_manifest_sha256(archive),
@@ -1967,7 +1964,7 @@ class CsindexHistoryWorkflow:
         unique_archive_rows = self._archive_rows(archive)
         report = {
             "schema_version": COVERAGE_REPORT_SCHEMA_VERSION,
-            "generated_at": _utc_now(),
+            "generated_at": utc_now_iso(),
             "requested_coverage": {
                 "from": requested_from.isoformat(),
                 "to": observed_on.isoformat(),

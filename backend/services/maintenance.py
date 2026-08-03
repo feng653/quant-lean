@@ -1,6 +1,7 @@
 """Background maintenance services for data refresh and model retraining."""
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 
 import asyncio
 import hashlib
@@ -384,10 +385,6 @@ async def run_data_update(
     raise DataUpdateFailedError(result)
 
 
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
 def _json_dumps(value: Any) -> str:
     return json.dumps(
         value,
@@ -444,7 +441,7 @@ async def _record_attempt_started(
                 deployment_id,
                 expected_version,
                 expected_version + 1,
-                _utc_now(),
+                utc_now_iso(),
             ),
         )
         await connection.commit()
@@ -488,7 +485,7 @@ async def _record_attempt_failed(
                 ),
                 state.retrain_manifest_hash,
                 error,
-                _utc_now(),
+                utc_now_iso(),
                 attempt_id,
             ),
         )
@@ -1178,7 +1175,7 @@ async def _retrain_deployment_candidate(
                     model_size,
                     _json_dumps(state.retrain_manifest),
                     state.retrain_manifest_hash,
-                    _utc_now(),
+                    utc_now_iso(),
                     attempt_id,
                 ),
             )

@@ -13,6 +13,7 @@ window, then stop every application listener before an archive can be made.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -124,10 +125,6 @@ def _canonical_bytes(value: object) -> bytes:
 
 def _digest(value: object) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
-
-
-def _utc_now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _resolve_root(data_root: Path | str | None) -> Path:
@@ -255,7 +252,7 @@ def build_inventory(data_root: Path | str | None = None) -> CleanupInventory:
     return CleanupInventory(
         schema_version=CLEANUP_SCHEMA,
         data_root=str(root),
-        generated_at=_utc_now(),
+        generated_at=utc_now_iso(),
         targets=tuple(targets),
         protected_paths=tuple(protected),
         database_inventory=databases,
@@ -384,7 +381,7 @@ def write_dry_run_report(
     payload = {
         "schema_version": CLEANUP_SCHEMA,
         "kind": "dry_run",
-        "created_at": _utc_now(),
+        "created_at": utc_now_iso(),
         "inventory": inventory.public_dict(),
         "gate": gate.public_dict(),
         "execute_performed": False,
@@ -457,7 +454,7 @@ def execute_cleanup(
         receipt = {
             "schema_version": CLEANUP_SCHEMA,
             "kind": "archive_receipt",
-            "created_at": _utc_now(),
+            "created_at": utc_now_iso(),
             "run_id": run_id,
             "maintenance_window_id": maintenance_window_id,
             "inventory_sha256": inventory.inventory_sha256,
@@ -523,6 +520,6 @@ def restore_archive(
     os.replace(archived, cache)
     if _tree_snapshot(cache) != expected:  # pragma: no cover - protects filesystem failure
         raise NonPitCleanupIntegrityError("restored cache integrity verification failed")
-    result = {"schema_version": CLEANUP_SCHEMA, "kind": "restore_receipt", "run_id": run_id, "restored_at": _utc_now()}
+    result = {"schema_version": CLEANUP_SCHEMA, "kind": "restore_receipt", "run_id": run_id, "restored_at": utc_now_iso()}
     _write_json(run_root / "restore-receipt.json", result)
     return result

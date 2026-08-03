@@ -6,6 +6,7 @@ boundaries for every caller.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now_iso
 from backend.core.hashing import file_sha256
 
 import argparse
@@ -64,10 +65,6 @@ _CONFIG_FILES = (
 
 class BackupError(RuntimeError):
     """Raised when a backup or restore cannot satisfy its safety contract."""
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -578,7 +575,7 @@ def create_backup(
     if _is_link_or_reparse_point(env_path) or not env_path.is_file():
         raise BackupError("source .env is required and must be a regular file")
 
-    created_at = _utc_now()
+    created_at = utc_now_iso()
     backup_id = uuid.uuid4().hex
     filename = (
         "quant-platform-"
@@ -735,7 +732,7 @@ def restore_backup(
             "operation": "restore_drill",
             "status": "verified",
             "backup_id": manifest["backup_id"],
-            "restored_at": _utc_now(),
+            "restored_at": utc_now_iso(),
             "source_commit": manifest.get("source_commit"),
             "archive_sha256": file_sha256(archive),
             "manifest_sha256": hashlib.sha256(_canonical_json(manifest)).hexdigest(),

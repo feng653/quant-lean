@@ -6,6 +6,7 @@ it never imports or deserializes a worker-provided artifact.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now
 from backend.core.hashing import file_sha256
 
 import hashlib
@@ -72,10 +73,6 @@ SnapshotBuilder = Callable[
     [dict[str, Any], TrainableStrategy, dict[str, Any], str, str, Path],
     Awaitable[SnapshotInfo],
 ]
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _iso(value: datetime) -> str:
@@ -315,7 +312,7 @@ class RemoteTrainingService:
         db_path: str | Path | None = None,
         storage_root: str | Path | None = None,
         snapshot_builder: SnapshotBuilder | None = None,
-        now: Callable[[], datetime] = _utc_now,
+        now: Callable[[], datetime] = utc_now,
         max_artifact_bytes: int = MAX_ARTIFACT_BYTES,
     ) -> None:
         self.db_path = Path(

@@ -6,6 +6,7 @@ source adapter; downstream research readers never inspect this directory.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now
 from backend.core.hashing import file_sha256
 
 from datetime import datetime, timedelta, timezone
@@ -40,10 +41,6 @@ def _canonical_bytes(value: Any) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
 
 
 def _parse_utc(value: object) -> datetime:
@@ -150,7 +147,7 @@ class ValidatedDailyStaging:
             # already-written parquet read/write so durability is portable.
             with data_temp.open("r+b") as handle:
                 os.fsync(handle.fileno())
-            created = _utc_now()
+            created = utc_now()
             metadata: dict[str, Any] = {
                 "schema_version": STAGING_SCHEMA,
                 "created_at": created.isoformat(),
@@ -219,7 +216,7 @@ class ValidatedDailyStaging:
             raise StagingIntegrityError("staging schema is unsupported")
         if metadata.get("request") != request:
             raise StagingIntegrityError("staging request identity changed")
-        if _parse_utc(metadata.get("expires_at")) <= _utc_now():
+        if _parse_utc(metadata.get("expires_at")) <= utc_now():
             raise StagingIntegrityError("staging response expired")
         if metadata.get("data_file") != data_path.name:
             raise StagingIntegrityError("staging data filename changed")

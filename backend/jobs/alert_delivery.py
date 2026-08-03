@@ -12,6 +12,7 @@ becoming an arbitrary data-exfiltration channel.
 """
 
 from __future__ import annotations
+from backend.core.timeutils import utc_now
 
 import hashlib
 import hmac
@@ -45,10 +46,6 @@ _STATUSES = frozenset(
 _MAX_BATCH_SIZE = 50
 
 WebhookTransport = Callable[[str, bytes, dict[str, str], float], int]
-
-
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def _timestamp(value: datetime) -> str:
@@ -190,7 +187,7 @@ def queue_slo_alert_delivery(
     """
     if transition not in _TRANSITIONS:
         raise ValueError("invalid alert transition")
-    current = now or _utc_now()
+    current = now or utc_now()
     current_text = _timestamp(current)
     retention_hours = max(
         min(int(settings.JOB_OBSERVABILITY_RETENTION_HOURS), 24 * 31), 1
@@ -516,7 +513,7 @@ def process_alert_delivery_outbox(
     outbox remains retryable.  The endpoint, response body and exception text
     are deliberately never persisted or logged.
     """
-    current = now or _utc_now()
+    current = now or utc_now()
     enabled, endpoint, config_error = _safe_webhook_configuration()
     report: dict[str, Any] = {
         "schema_version": "slo-alert-delivery/v1",
@@ -609,7 +606,7 @@ def acknowledge_alert_delivery(
     """Record a local administrator acknowledgement for a delivered breach."""
     if not delivery_id.startswith("slo-") or len(delivery_id) > 96:
         return False
-    current_text = _timestamp(now or _utc_now())
+    current_text = _timestamp(now or utc_now())
     conn = sqlite3.connect(db_path)
     try:
         cursor = conn.execute(
