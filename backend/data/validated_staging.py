@@ -6,6 +6,7 @@ source adapter; downstream research readers never inspect this directory.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -39,14 +40,6 @@ def _canonical_bytes(value: Any) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _utc_now() -> datetime:
@@ -165,7 +158,7 @@ class ValidatedDailyStaging:
                 "request": request,
                 "data_file": data_path.name,
                 "data_size": data_temp.stat().st_size,
-                "data_sha256": _sha256_file(data_temp),
+                "data_sha256": file_sha256(data_temp),
                 "evidence": evidence,
             }
             metadata["content_sha256"] = hashlib.sha256(
@@ -233,7 +226,7 @@ class ValidatedDailyStaging:
         _secure_regular_file(data_path)
         if (
             int(metadata.get("data_size", -1)) != data_path.stat().st_size
-            or metadata.get("data_sha256") != _sha256_file(data_path)
+            or metadata.get("data_sha256") != file_sha256(data_path)
         ):
             raise StagingIntegrityError("staging parquet integrity check failed")
         try:

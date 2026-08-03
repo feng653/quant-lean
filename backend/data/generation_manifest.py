@@ -13,6 +13,7 @@ must never remove the active generation.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 from dataclasses import dataclass
 import hashlib
@@ -52,14 +53,6 @@ def _canonical_bytes(value: object) -> bytes:
         separators=(",", ":"),
         allow_nan=False,
     ).encode("utf-8")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _fsync_directory(path: Path) -> None:
@@ -177,7 +170,7 @@ class GenerationManifestStore:
                 artifacts[name] = {
                     "relative_path": str(target.relative_to(self.root)),
                     "size_bytes": size,
-                    "sha256": _sha256_file(target),
+                    "sha256": file_sha256(target),
                 }
             _fsync_directory(generation_root)
             _fsync_directory(generation_root.parent)
@@ -256,7 +249,7 @@ class GenerationManifestStore:
             ):
                 raise GenerationManifestError("generation artifact descriptor is invalid")
             self._assert_regular(expected)
-            if expected.stat().st_size != size or _sha256_file(expected) != digest:
+            if expected.stat().st_size != size or file_sha256(expected) != digest:
                 raise GenerationManifestError("generation artifact integrity check failed")
             resolved[name] = expected
         return GenerationView(

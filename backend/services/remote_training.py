@@ -6,6 +6,7 @@ it never imports or deserializes a worker-provided artifact.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import hashlib
 import hmac
@@ -128,14 +129,6 @@ def _params_hash(params: dict[str, Any]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(UPLOAD_CHUNK_BYTES), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _revoked_token_hash() -> str:
     """Return an unguessable tombstone that cannot match the issued token."""
     return hashlib.sha256(
@@ -146,7 +139,7 @@ def _revoked_token_hash() -> str:
 def _strategy_source_sha256(strategy: TrainableStrategy) -> str:
     try:
         source_path = Path(inspect.getfile(type(strategy))).resolve()
-        return _file_sha256(source_path)
+        return file_sha256(source_path)
     except (OSError, TypeError):
         source = inspect.getsource(type(strategy)).encode("utf-8")
         return hashlib.sha256(source).hexdigest()
@@ -280,7 +273,7 @@ def _persist_snapshot(
     effective_train_dates = dates[first_position : last_position + 1]
     return SnapshotInfo(
         path=snapshot_path,
-        sha256=_file_sha256(snapshot_path),
+        sha256=file_sha256(snapshot_path),
         data_version=compute_data_version(snapshot),
         rows=len(snapshot),
         columns=len(snapshot.columns),
@@ -686,7 +679,7 @@ class RemoteTrainingService:
         expected_parent = _safe_task_dir(self.storage_root, task_uuid)
         if path.parent != expected_parent or not path.is_file():
             raise RemoteTrainingError(410, "训练数据快照不存在")
-        if _file_sha256(path) != row["data_sha256"]:
+        if file_sha256(path) != row["data_sha256"]:
             raise RemoteTrainingError(409, "训练数据快照校验失败")
         return path
 

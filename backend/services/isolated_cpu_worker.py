@@ -1,6 +1,7 @@
 """Private worker entrypoint for :mod:`backend.services.isolated_cpu`."""
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import hashlib
 import os
@@ -89,14 +90,6 @@ def _write_result(path: Path, response: dict[str, Any]) -> None:
         os.fsync(handle.fileno())
 
 
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def _main(argv: list[str]) -> int:
     if len(argv) != 4:
         return 2
@@ -104,7 +97,7 @@ def _main(argv: list[str]) -> int:
     result_path = Path(argv[2])
     expected_digest = argv[3]
     try:
-        if _file_sha256(request_path) != expected_digest:
+        if file_sha256(request_path) != expected_digest:
             return 3
         with request_path.open("rb") as handle:
             request = pickle.load(handle)

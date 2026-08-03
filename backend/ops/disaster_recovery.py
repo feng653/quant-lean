@@ -6,6 +6,7 @@ boundaries for every caller.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import argparse
 import base64
@@ -76,14 +77,6 @@ def _canonical_json(value: Any) -> bytes:
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(_CHUNK_SIZE):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:
@@ -321,7 +314,7 @@ def _manifest_entries(payload_root: Path) -> list[dict[str, Any]]:
             {
                 "path": path.relative_to(payload_root).as_posix(),
                 "size_bytes": path.stat().st_size,
-                "sha256": _sha256_file(path),
+                "sha256": file_sha256(path),
             }
         )
     return entries
@@ -367,7 +360,7 @@ def _encrypt_file(
             "salt": base64.b64encode(salt).decode("ascii"),
         },
         "nonce": base64.b64encode(nonce).decode("ascii"),
-        "plaintext_sha256": _sha256_file(plaintext_path),
+        "plaintext_sha256": file_sha256(plaintext_path),
     }
     header_bytes = _canonical_json(header)
     key = _derive_key(passphrase, salt)
@@ -464,7 +457,7 @@ def _decrypt_file(
             plaintext_path.unlink(missing_ok=True)
             raise BackupError("backup authentication failed") from exc
     plaintext_path.chmod(0o600)
-    if _sha256_file(plaintext_path) != header.get("plaintext_sha256"):
+    if file_sha256(plaintext_path) != header.get("plaintext_sha256"):
         plaintext_path.unlink(missing_ok=True)
         raise BackupError("decrypted archive digest does not match the header")
     return header
@@ -536,7 +529,7 @@ def _load_and_verify_manifest(restore_root: Path) -> dict[str, Any]:
             raise BackupError(f"backup payload is missing: {path_value}")
         if path.stat().st_size != entry.get("size_bytes"):
             raise BackupError(f"backup payload size mismatch: {path_value}")
-        if _sha256_file(path) != entry.get("sha256"):
+        if file_sha256(path) != entry.get("sha256"):
             raise BackupError(f"backup payload digest mismatch: {path_value}")
     actual_paths = {
         path.relative_to(payload_root).as_posix()
@@ -680,7 +673,7 @@ def create_backup(
         "created_at": created_at,
         "archive_name": filename,
         "archive_size_bytes": final_path.stat().st_size,
-        "archive_sha256": _sha256_file(final_path),
+        "archive_sha256": file_sha256(final_path),
         "manifest_sha256": hashlib.sha256(_canonical_json(manifest)).hexdigest(),
         "database_integrity": database_integrity,
         "file_count": len(entries),
@@ -744,7 +737,7 @@ def restore_backup(
             "backup_id": manifest["backup_id"],
             "restored_at": _utc_now(),
             "source_commit": manifest.get("source_commit"),
-            "archive_sha256": _sha256_file(archive),
+            "archive_sha256": file_sha256(archive),
             "manifest_sha256": hashlib.sha256(_canonical_json(manifest)).hexdigest(),
             "database_integrity": database_integrity,
             "file_count": len(manifest["entries"]),

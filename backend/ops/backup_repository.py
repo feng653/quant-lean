@@ -7,6 +7,7 @@ and checks GitHub's server-side asset digest after upload and before download.
 """
 
 from __future__ import annotations
+from backend.core.hashing import file_sha256
 
 import argparse
 import fcntl
@@ -58,14 +59,6 @@ def _canonical_json(value: Any) -> bytes:
 def _redact(value: object) -> str:
     text = _TOKEN_RE.sub("[REDACTED]", str(value))
     return _CREDENTIAL_URL_RE.sub("https://[REDACTED]@github.com", text)
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _require_absolute_unlinked(path: Path, *, label: str, exists: bool) -> Path:
@@ -403,7 +396,7 @@ def _asset_by_name(release: dict[str, Any], name: str) -> dict[str, Any] | None:
 
 
 def _verify_asset(asset: dict[str, Any], archive: Path) -> str:
-    expected_digest = _sha256_file(archive)
+    expected_digest = file_sha256(archive)
     if asset.get("size") != archive.stat().st_size:
         raise RepositoryBackupError("GitHub Release asset size mismatch")
     if asset.get("digest") != f"sha256:{expected_digest}":
@@ -649,7 +642,7 @@ def download_verified_archive(
             downloaded = _validate_archive(downloaded_path)
             if (
                 downloaded.stat().st_size != expected_size
-                or f"sha256:{_sha256_file(downloaded)}" != expected_digest
+                or f"sha256:{file_sha256(downloaded)}" != expected_digest
             ):
                 raise RepositoryBackupError("downloaded Release asset integrity failed")
             os.replace(downloaded, target)
