@@ -1,0 +1,6221 @@
+{
+  "DELETE /api/admin/users/{target_user_id}": {
+    "body": {
+      "detail": "用户不存在: 2"
+    },
+    "status": 404
+  },
+  "DELETE /api/auth/sessions/{session_id}": {
+    "body": {
+      "detail": "会话不存在"
+    },
+    "status": 404
+  },
+  "DELETE /api/experiments/parameter-presets/{preset_id}": {
+    "body": {
+      "detail": "参数方案不存在: 1"
+    },
+    "status": 404
+  },
+  "DELETE /api/experiments/{experiment_id}": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "DELETE /api/factor-research/runs/{run_id}": {
+    "body": {
+      "detail": "研究运行不存在或已归档"
+    },
+    "status": 404
+  },
+  "DELETE /api/jobs/{job_id}": {
+    "body": {
+      "detail": "任务不存在: 1"
+    },
+    "status": 404
+  },
+  "DELETE /api/trading/deployments/{deployment_id}": {
+    "body": {
+      "detail": "部署不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/admin/permissions": {
+    "body": {
+      "data": [
+        {
+          "group": "实验",
+          "key": "experiments:read",
+          "name": "查看实验"
+        },
+        {
+          "group": "实验",
+          "key": "experiments:create",
+          "name": "创建实验"
+        },
+        {
+          "group": "实验",
+          "key": "experiments:delete",
+          "name": "删除实验"
+        },
+        {
+          "group": "实验",
+          "key": "experiments:sweep",
+          "name": "参数扫描"
+        },
+        {
+          "group": "实验",
+          "key": "experiments:promote",
+          "name": "审批研究晋升"
+        },
+        {
+          "group": "交易",
+          "key": "trading:read",
+          "name": "查看交易"
+        },
+        {
+          "group": "交易",
+          "key": "trading:deploy",
+          "name": "部署策略"
+        },
+        {
+          "group": "交易",
+          "key": "trading:execute",
+          "name": "执行模拟"
+        },
+        {
+          "group": "交易",
+          "key": "trading:rebalance",
+          "name": "再平衡"
+        },
+        {
+          "group": "数据",
+          "key": "data:read",
+          "name": "查看数据"
+        },
+        {
+          "group": "数据",
+          "key": "data:update",
+          "name": "更新数据"
+        },
+        {
+          "group": "策略",
+          "key": "strategies:read",
+          "name": "查看策略"
+        },
+        {
+          "group": "策略",
+          "key": "strategies:scan",
+          "name": "扫描策略"
+        },
+        {
+          "group": "AI",
+          "key": "ai:use",
+          "name": "使用AI"
+        },
+        {
+          "group": "管理",
+          "key": "admin:users",
+          "name": "管理用户"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/admin/users": {
+    "body": {
+      "data": [
+        {
+          "created_at": "<datetime>",
+          "display_name": "Contract Admin",
+          "email": null,
+          "id": "<id>",
+          "is_active": true,
+          "is_admin": true,
+          "last_login": null,
+          "permission_count": 0,
+          "permissions": [],
+          "role": "管理员",
+          "username": "contract_admin"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/auth/me": {
+    "body": {
+      "data": {
+        "display_name": "Contract Admin",
+        "email": null,
+        "id": "<id>",
+        "is_active": true,
+        "is_admin": true,
+        "permissions": [],
+        "username": "contract_admin"
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/auth/sessions": {
+    "body": {
+      "data": [
+        {
+          "created_at": "<datetime>",
+          "current": true,
+          "expires_at": "<datetime>",
+          "last_seen_at": "<datetime>",
+          "revoked_at": null,
+          "session_id": "<hash>"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/data/cache/status": {
+    "body": {
+      "data": {
+        "available": false,
+        "codes_sha256": null,
+        "data_quality": null,
+        "date_end": null,
+        "date_start": null,
+        "error_code": "cache_missing",
+        "fields": [],
+        "n_dates": 0,
+        "n_stocks": 0,
+        "pool_id": "csi500",
+        "price_adjustment": null,
+        "price_ledger": null,
+        "ready_for_execution_simulation": false,
+        "ready_for_real_tuning": false,
+        "ready_for_return_research": false,
+        "ready_for_static_adjusted_return_research": false,
+        "ready_for_unbiased_return_research": false,
+        "ready_for_unbiased_tuning": false,
+        "recommended_action": "submit_initial_data_update",
+        "research_limitations": [
+          "point_in_time_universe_missing"
+        ],
+        "return_research_semantics": "legacy_static_price_research_only_not_promotion_eligible",
+        "runtime_readable": false,
+        "schema_version": 0,
+        "source_all_batches_adjusted_factor_validated": false,
+        "source_all_batches_cross_validated": false,
+        "source_all_batches_raw_cross_validated": false,
+        "source_complete_code_coverage": false,
+        "source_evidence_levels": [],
+        "source_frame_digest": null,
+        "source_identity_consistent": false,
+        "source_providers": [],
+        "source_trust": "unverified",
+        "source_validation_ready": false,
+        "survivorship_bias_risk": true,
+        "universe_point_in_time": false
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/calendar": {
+    "body": {
+      "data": {
+        "count": "<count>",
+        "end": "<date>",
+        "start": "<date>",
+        "trading_days": [
+          "<date>",
+          "<date>"
+        ]
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/calendar/check/{date}": {
+    "body": {
+      "data": {
+        "date": "<date>",
+        "is_trading_day": false,
+        "next_trading_day": null,
+        "prev_trading_day": "<date>"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/industries": {
+    "body": {
+      "data": {
+        "classification": "cninfo_008001",
+        "classifications_available": [
+          "cninfo_008001"
+        ],
+        "count": "<count>",
+        "filterable": false,
+        "industries": [],
+        "map_coverage": 0.0,
+        "reason": "industry_cache_missing_stale_or_invalid",
+        "schema_version": "industry-catalog/v2",
+        "source": "akshare:cninfo"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/industries/map": {
+    "body": {
+      "data": {
+        "classification": "cninfo_008001",
+        "coverage_scope": "not_evaluated",
+        "filterable": false,
+        "map_coverage": null,
+        "mapped_stocks": 2,
+        "minimum_coverage": 0.95,
+        "n_stocks": 2,
+        "note": "完整映射通过 /api/data/industries/map/full 获取",
+        "reason": "coverage_not_evaluated",
+        "requested_mapped_stocks": 0,
+        "requested_stocks": 0,
+        "sample": {
+          "000001": "Banking",
+          "600000": "Banking"
+        },
+        "source": "offline:contract-snapshot"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/industries/map/full": {
+    "body": {
+      "data": {
+        "classification": "cninfo_008001",
+        "coverage_scope": "not_evaluated",
+        "filterable": false,
+        "map": {
+          "000001": "Banking",
+          "600000": "Banking"
+        },
+        "map_coverage": null,
+        "mapped_stocks": 2,
+        "minimum_coverage": 0.95,
+        "n_stocks": 2,
+        "reason": "coverage_not_evaluated",
+        "requested_mapped_stocks": 0,
+        "requested_stocks": 0,
+        "source": "offline:contract-snapshot"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/point-in-time/as-of": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "expected": "'security', 'index_membership' or 'industry'"
+          },
+          "input": "price",
+          "loc": [
+            "query",
+            "domain"
+          ],
+          "msg": "Input should be 'security', 'index_membership' or 'industry'",
+          "type": "literal_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "GET /api/data/point-in-time/automation/runs": {
+    "body": {
+      "data": {
+        "auto_activate_green": false,
+        "personal_mode": false,
+        "policy_sha256": "<hash>",
+        "runs": [],
+        "schema_version": "pit-durable-update/v1"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/point-in-time/coverage": {
+    "body": {
+      "data": {
+        "industry": {
+          "evidence_kind_required": "effective_dated_history",
+          "missing_security_code_count": 0,
+          "missing_security_codes": [],
+          "neutralization_ready": false,
+          "ready": false,
+          "reason": "effective_dated_history_missing",
+          "scope_id": "cninfo_008001"
+        },
+        "limitations": [
+          "effective_dated_history_missing"
+        ],
+        "query": {
+          "end": "<date>",
+          "pool_id": "csi500",
+          "security_code_count": 0,
+          "start": "<date>"
+        },
+        "ready": false,
+        "schema_version": "point-in-time-readiness/v1",
+        "security_master": {
+          "evidence_kind_required": "effective_dated_history",
+          "missing_security_code_count": 0,
+          "missing_security_codes": [],
+          "ready": false,
+          "reason": "effective_dated_history_missing",
+          "scope_id": "cn_equity"
+        },
+        "universe": {
+          "evidence_kind_required": "effective_dated_history",
+          "member_code_count": 0,
+          "missing_price_code_count": 0,
+          "missing_price_codes": [],
+          "ready": false,
+          "reason": "effective_dated_history_missing",
+          "scope_id": "csi500"
+        }
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/point-in-time/governance/packages/{package_id}": {
+    "body": {
+      "detail": {
+        "code": "pit_evidence_state_invalid",
+        "message": "package identity is invalid"
+      }
+    },
+    "status": 409
+  },
+  "GET /api/data/point-in-time/governance/packages/{package_id}/events": {
+    "body": {
+      "detail": {
+        "code": "pit_evidence_state_invalid",
+        "message": "package identity is invalid"
+      }
+    },
+    "status": 409
+  },
+  "GET /api/data/pools": {
+    "body": {
+      "data": [
+        {
+          "availability": {
+            "network_accessed": false,
+            "ready": false,
+            "reason": "effective_dated_history_missing",
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "source_batches": [],
+            "staleness_calendar_days": null
+          },
+          "count": "<count>",
+          "declared_count": 300,
+          "description": "沪深300指数成分股",
+          "id": "csi300",
+          "index_code": "000300",
+          "lineage": {
+            "point_in_time": false,
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "snapshot_hash": null,
+            "source_as_of": null,
+            "staleness_calendar_days": null
+          },
+          "name": "沪深300",
+          "risk_warnings": [
+            "point_in_time_working_day_coverage_missing",
+            "effective_dated_history_missing"
+          ]
+        },
+        {
+          "availability": {
+            "network_accessed": false,
+            "ready": false,
+            "reason": "effective_dated_history_missing",
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "source_batches": [],
+            "staleness_calendar_days": null
+          },
+          "count": "<count>",
+          "declared_count": 500,
+          "description": "中证500指数成分股",
+          "id": "csi500",
+          "index_code": "000905",
+          "lineage": {
+            "point_in_time": false,
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "snapshot_hash": null,
+            "source_as_of": null,
+            "staleness_calendar_days": null
+          },
+          "name": "中证500",
+          "risk_warnings": [
+            "point_in_time_working_day_coverage_missing",
+            "effective_dated_history_missing"
+          ]
+        },
+        {
+          "availability": {
+            "network_accessed": false,
+            "ready": false,
+            "reason": "effective_dated_history_missing",
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "source_batches": [],
+            "staleness_calendar_days": null
+          },
+          "count": "<count>",
+          "declared_count": 800,
+          "description": "中证800指数成分股（沪深300+中证500）",
+          "id": "csi800",
+          "index_code": "000906",
+          "lineage": {
+            "point_in_time": false,
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "snapshot_hash": null,
+            "source_as_of": null,
+            "staleness_calendar_days": null
+          },
+          "name": "CSI 800",
+          "risk_warnings": [
+            "point_in_time_working_day_coverage_missing",
+            "effective_dated_history_missing"
+          ]
+        },
+        {
+          "availability": {
+            "network_accessed": false,
+            "ready": false,
+            "reason": "effective_dated_history_missing",
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "source_batches": [],
+            "staleness_calendar_days": null
+          },
+          "count": "<count>",
+          "declared_count": 1000,
+          "description": "中证1000指数成分股",
+          "id": "csi1000",
+          "index_code": "000852",
+          "lineage": {
+            "point_in_time": false,
+            "requested_as_of": "<date>",
+            "resolution": "unavailable",
+            "resolved_as_of": null,
+            "snapshot_hash": null,
+            "source_as_of": null,
+            "staleness_calendar_days": null
+          },
+          "name": "中证1000",
+          "risk_warnings": [
+            "point_in_time_working_day_coverage_missing",
+            "effective_dated_history_missing"
+          ]
+        }
+      ],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/data/pools/{pool_id}": {
+    "body": {
+      "data": {
+        "availability": {
+          "network_accessed": false,
+          "ready": false,
+          "reason": "effective_dated_history_missing",
+          "requested_as_of": "<date>",
+          "resolution": "unavailable",
+          "resolved_as_of": null,
+          "source_batches": [],
+          "staleness_calendar_days": null
+        },
+        "count": "<count>",
+        "declared_count": 500,
+        "description": "中证500指数成分股",
+        "industries": [],
+        "lineage": {
+          "point_in_time": false,
+          "requested_as_of": "<date>",
+          "resolution": "unavailable",
+          "resolved_as_of": null,
+          "snapshot_hash": null,
+          "source_as_of": null,
+          "staleness_calendar_days": null
+        },
+        "name": "中证500",
+        "pool_id": "csi500",
+        "quality": {
+          "expected_count": 500,
+          "ready": false,
+          "unique_count": 0
+        },
+        "risk_warnings": [
+          "point_in_time_working_day_coverage_missing",
+          "effective_dated_history_missing"
+        ]
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/pools/{pool_id}/stocks": {
+    "body": {
+      "data": {
+        "availability": {
+          "network_accessed": false,
+          "ready": false,
+          "reason": "effective_dated_history_missing",
+          "requested_as_of": "<date>",
+          "resolution": "unavailable",
+          "resolved_as_of": null,
+          "source_batches": [],
+          "staleness_calendar_days": null
+        },
+        "count": "<count>",
+        "lineage": {
+          "point_in_time": false,
+          "requested_as_of": "<date>",
+          "resolution": "unavailable",
+          "resolved_as_of": null,
+          "snapshot_hash": null,
+          "source_as_of": null,
+          "staleness_calendar_days": null
+        },
+        "name": "中证500",
+        "note": "该日期没有已激活的 PIT 成分证据",
+        "pool_id": "csi500",
+        "quality": {
+          "ready": false,
+          "reason": "effective_dated_history_missing"
+        },
+        "risk_warnings": [
+          "point_in_time_working_day_coverage_missing",
+          "effective_dated_history_missing",
+          "effective_dated_history_missing"
+        ],
+        "stocks": []
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/price-ledger/corporate-action-evidence": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9]{6}$"
+          },
+          "input": "000001.SZ",
+          "loc": [
+            "query",
+            "security_code"
+          ],
+          "msg": "String should match pattern '^[0-9]{6}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "GET /api/data/price-ledger/cross-scope-audit": {
+    "body": {
+      "data": {
+        "canonical_evidence_sha256": "<hash>",
+        "canonical_identity_count": 0,
+        "checked_row_count": 0,
+        "checked_scope_count": 0,
+        "conflict_identity_count": 0,
+        "conflicts": [],
+        "ledger_available": false,
+        "limitations": [],
+        "ready": true,
+        "required_end": "<date>",
+        "required_start": "<date>",
+        "schema_version": "price-cross-scope-audit/v1",
+        "scope_ids": [],
+        "truncated": false
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/price-ledger/import-contract": {
+    "body": {
+      "data": {
+        "administrator_permission": "admin:users",
+        "anchor_semantics": {
+          "hfq": "hfq_absolute_anchor_bound_to_source_version",
+          "raw": "unadjusted_exchange_price"
+        },
+        "atomic": true,
+        "identity": [
+          "security_code",
+          "date",
+          "source_provider",
+          "source_dataset",
+          "source_version",
+          "adjustment"
+        ],
+        "immutable_after_acceptance": true,
+        "limitations": [
+          "Only declared evidence can be staged through the direct endpoint. Public-cross-validated, licensed and exchange-authoritative levels remain blocked until a managed artifact/review/receipt workflow exists.",
+          "The synchronous API accepts at most 20,000 rows per role; larger PIT-union imports use the checkpointed backfill job.",
+          "Real tuning and execution simulation require raw, hfq and authoritative corporate-action evidence together."
+        ],
+        "quality_gates": [
+          "complete_matching_raw_hfq_code_date_identity",
+          "finite_positive_ohlc_and_nonnegative_volume",
+          "valid_ohlc_relationship",
+          "same_day_ohlc_implied_factor_consistency",
+          "positive_adjustment_factor",
+          "authoritative_evidence_for_abnormal_factor_jump",
+          "cross_scope_canonical_price_consistency",
+          "hfq_absolute_anchor_and_return_geometry_separation"
+        ],
+        "required_price_roles": {
+          "raw_execution": {
+            "adjustment": "raw",
+            "fields": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume"
+            ],
+            "usage": "execution_and_fill_prices_only"
+          },
+          "research_adjusted": {
+            "adjustment": "hfq",
+            "fields": [
+              "open",
+              "high",
+              "low",
+              "close",
+              "volume"
+            ],
+            "usage": "return_and_factor_research_only"
+          }
+        },
+        "schema_version": "dual-price-ledger-import/v1",
+        "scope_semantics": "scope_id binds usage/coverage only and is not part of the canonical security price identity"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/price-ledger/legacy-cache-audit": {
+    "body": {
+      "cached": false,
+      "data": {
+        "audit_available": false,
+        "checked_scopes": [],
+        "compared_scope_pair_count": 0,
+        "conflict_free": true,
+        "conflict_identity_count": 0,
+        "conflicts": [],
+        "descriptive_return_consistency": false,
+        "geometry_conflict_count": 0,
+        "isolated_source_pairs": [],
+        "legacy_schema3_scopes": [],
+        "limitations": [
+          "cache_scope_unavailable",
+          "audit_is_read_only_no_legacy_cache_rewrite",
+          "legacy_cache_cannot_establish_unbiased_readiness"
+        ],
+        "mixed_adjustment_examples": [],
+        "mixed_adjustment_geometry_conflict_count": 0,
+        "mixed_adjustment_identity_count": 0,
+        "mixed_adjustment_pairs": [],
+        "mixed_adjustment_return_conflict_count": 0,
+        "nonpositive_price_scopes": [],
+        "qfq_scopes": [],
+        "ready_for_unbiased_research": false,
+        "ready_for_unbiased_return_research": false,
+        "required_end": "<date>",
+        "required_start": "<date>",
+        "return_conflict_count": 0,
+        "schema_version": "legacy-price-cache-audit/v1",
+        "truncated": false,
+        "unavailable_scopes": [
+          {
+            "reason": "cache_missing",
+            "scope_id": "csi300"
+          },
+          {
+            "reason": "cache_missing",
+            "scope_id": "csi500"
+          },
+          {
+            "reason": "cache_missing",
+            "scope_id": "csi800"
+          },
+          {
+            "reason": "cache_missing",
+            "scope_id": "csi1000"
+          }
+        ],
+        "unverified_source_scopes": []
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/price-ledger/prices": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "expected": "'raw_execution' or 'research_adjusted'"
+          },
+          "input": "public",
+          "loc": [
+            "query",
+            "role"
+          ],
+          "msg": "Input should be 'raw_execution' or 'research_adjusted'",
+          "type": "literal_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "GET /api/data/price-ledger/readiness": {
+    "body": {
+      "data": {
+        "canonical_evidence_sha256": null,
+        "canonical_price_consistency": false,
+        "corporate_action_authoritative": false,
+        "data_gaps": [
+          {
+            "code": "ledger_unavailable",
+            "remediation": "supply the missing governed evidence and rerun validation"
+          },
+          {
+            "code": "corporate_action_authoritative_evidence_missing",
+            "remediation": "complete licensed artifact governance for event and no-event coverage"
+          }
+        ],
+        "descriptive_return_research_ready": false,
+        "dual_ledger_complete": false,
+        "ledger_available": false,
+        "limitations": [
+          "ledger_unavailable",
+          "corporate_action_authoritative_evidence_missing"
+        ],
+        "ready_for_adjusted_price_return_research": false,
+        "ready_for_execution_simulation": false,
+        "ready_for_real_tuning": false,
+        "ready_for_return_research": false,
+        "ready_for_unbiased_research": false,
+        "ready_for_unbiased_return_research": false,
+        "reason": "ledger_unavailable",
+        "required_end": "<date>",
+        "required_start": "<date>",
+        "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+        "roles": {
+          "raw_execution": {
+            "adjustment": "raw",
+            "available": false,
+            "trusted": false
+          },
+          "research_adjusted": {
+            "adjustment": "hfq",
+            "available": false,
+            "trusted": false
+          }
+        },
+        "schema_version": "dual-price-ledger-readiness/v1",
+        "scope_id": "csi500"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/price-ledger/runtime-bindings/{binding_id}/validate": {
+    "body": {
+      "detail": {
+        "code": "price_ledger_contract_invalid",
+        "message": "runtime price binding does not exist"
+      }
+    },
+    "status": 422
+  },
+  "GET /api/data/provider-licence-evidence/contract": {
+    "body": {
+      "data": {
+        "administrator_permission": "admin:users",
+        "append_only": true,
+        "independent_review_required": true,
+        "production_release_authorized": false,
+        "remaining_release_requirements": [
+          "approved_signed_provider_artifacts",
+          "independent_official_reconciliation",
+          "production_release_dry_run_without_blockers"
+        ],
+        "schema_version": "provider-licence-evidence-api/v1",
+        "states": [
+          "unverified",
+          "approved",
+          "rejected"
+        ],
+        "stored_document_contents": false,
+        "stored_raw_reference": false
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/provider-licence-evidence/records": {
+    "body": {
+      "data": {
+        "items": [],
+        "production_release_authorized": false,
+        "total": "<count>"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/provider-licence-evidence/records/{record_sha256}": {
+    "body": {
+      "detail": {
+        "code": "licence_evidence_contract_invalid",
+        "message": "licence evidence record is unavailable"
+      }
+    },
+    "status": 422
+  },
+  "GET /api/data/research-pools/{pool_id}/stocks": {
+    "body": {
+      "data": {
+        "available": false,
+        "reason": "research_generation_missing",
+        "records": []
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/research-sources": {
+    "body": {
+      "data": {
+        "live_trading_policy": "hard_locked",
+        "mode": "research_and_paper_warning_only",
+        "schema_version": "research-data-sources/v1",
+        "sources": [
+          {
+            "available": false,
+            "capabilities": [
+              "historical_index_membership",
+              "daily",
+              "adjustment_factor",
+              "daily_basic",
+              "security_master",
+              "calendar",
+              "corporate_actions",
+              "benchmark_index_daily"
+            ],
+            "classification": "single_source_research",
+            "configured": false,
+            "datasets": [
+              {
+                "dataset": "index_membership",
+                "record_count": 0,
+                "status": "not_materialized"
+              },
+              {
+                "dataset": "daily",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "adjustment_factor",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "daily_basic",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "security_master",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "calendar",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "corporate_actions",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              },
+              {
+                "dataset": "benchmark_index_daily",
+                "record_count": 0,
+                "status": "collection_supported_not_materialized"
+              }
+            ],
+            "display_name": "Tushare Pro",
+            "generation_id": null,
+            "installed": true,
+            "last_observation": null,
+            "live_eligible": false,
+            "refreshable": true,
+            "research_trust_profile": "single_source_research_warning_only",
+            "row_count": 0,
+            "source_id": "tushare",
+            "warnings": [
+              "research_generation_missing"
+            ]
+          },
+          {
+            "available": false,
+            "capabilities": [
+              "daily",
+              "trade_status_cross_check"
+            ],
+            "classification": "cross_check_only",
+            "configured": true,
+            "datasets": [
+              {
+                "dataset": "daily",
+                "record_count": 0,
+                "status": "not_retained"
+              },
+              {
+                "dataset": "trade_status_cross_check",
+                "record_count": 0,
+                "status": "provider_unverified"
+              }
+            ],
+            "display_name": "BaoStock",
+            "generation_id": null,
+            "installed": true,
+            "last_observation": null,
+            "live_eligible": false,
+            "refreshable": false,
+            "row_count": 0,
+            "source_id": "baostock",
+            "warnings": [
+              "no_retained_observation",
+              "no_historical_index_membership",
+              "cross_check_only"
+            ]
+          },
+          {
+            "available": false,
+            "capabilities": [
+              "activated_index_membership",
+              "legacy_price_cache",
+              "canonical_price_ledger_if_bound"
+            ],
+            "classification": "local_runtime",
+            "configured": true,
+            "datasets": [
+              {
+                "dataset": "activated_index_membership",
+                "record_count": 0,
+                "status": "unavailable"
+              }
+            ],
+            "display_name": "本地已激活数据",
+            "generation_id": null,
+            "installed": true,
+            "last_observation": null,
+            "live_eligible": false,
+            "refreshable": false,
+            "row_count": 0,
+            "source_id": "activated_local",
+            "warnings": [
+              "activated_local_pool_unavailable"
+            ]
+          }
+        ]
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/research-sources/conflicts": {
+    "body": {
+      "data": {
+        "comparisons": [],
+        "conflict_count": 0,
+        "conflicts": [],
+        "schema_version": "research-data-conflicts/v1",
+        "status": "insufficient_sources",
+        "uncompared": [
+          {
+            "left_source": "tushare",
+            "reason": "research_generation_unavailable",
+            "right_source": "activated_local"
+          }
+        ]
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/stocks/batch": {
+    "body": {
+      "data": {
+        "codes": [
+          "000001.SZ"
+        ],
+        "columns": [
+          "date",
+          "000001.SZ"
+        ],
+        "date_end": "<date>",
+        "date_start": "<date>",
+        "fields": [
+          "close"
+        ],
+        "n_dates": 2,
+        "records": [
+          {
+            "000001.SZ": 0.0,
+            "date": "<date>"
+          },
+          {
+            "000001.SZ": 0.0,
+            "date": "<date>"
+          }
+        ]
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/stocks/{code}": {
+    "body": {
+      "data": {
+        "code": "000001.SZ",
+        "records": [
+          {
+            "amount": 0.0,
+            "close": 0.0,
+            "date": "<date>",
+            "high": 0.0,
+            "low": 0.0,
+            "open": 0.0,
+            "volume": 0.0
+          },
+          {
+            "amount": 0.0,
+            "close": 0.0,
+            "date": "<date>",
+            "high": 0.0,
+            "low": 0.0,
+            "open": 0.0,
+            "volume": 0.0
+          }
+        ],
+        "resolution": "daily",
+        "source": "live_fetch"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/data/update/status": {
+    "body": {
+      "data": {
+        "broker_status": {
+          "status": "unknown"
+        },
+        "governance_refresh_status": {
+          "status": "unknown"
+        },
+        "market_data_update_contract": {
+          "available": false,
+          "reason": "pit_dual_price_update_not_authorized",
+          "requires": [
+            "licensed_provider",
+            "activated_pit_membership",
+            "raw_execution_prices",
+            "research_adjusted_prices",
+            "exact_runtime_binding"
+          ],
+          "scope": "activated_pit_membership_union"
+        },
+        "pools_cache": [
+          {
+            "date_end": null,
+            "date_start": null,
+            "exists": false,
+            "fields": [],
+            "file_size_mb": 0.0,
+            "last_updated": null,
+            "n_dates": 0,
+            "n_stocks": 0,
+            "pool_id": "csi300",
+            "schema_version": 1,
+            "source": "offline:contract-snapshot"
+          },
+          {
+            "date_end": null,
+            "date_start": null,
+            "exists": false,
+            "fields": [],
+            "file_size_mb": 0.0,
+            "last_updated": null,
+            "n_dates": 0,
+            "n_stocks": 0,
+            "pool_id": "csi500",
+            "schema_version": 1,
+            "source": "offline:contract-snapshot"
+          },
+          {
+            "date_end": null,
+            "date_start": null,
+            "exists": false,
+            "fields": [],
+            "file_size_mb": 0.0,
+            "last_updated": null,
+            "n_dates": 0,
+            "n_stocks": 0,
+            "pool_id": "csi800",
+            "schema_version": 1,
+            "source": "offline:contract-snapshot"
+          },
+          {
+            "date_end": null,
+            "date_start": null,
+            "exists": false,
+            "fields": [],
+            "file_size_mb": 0.0,
+            "last_updated": null,
+            "n_dates": 0,
+            "n_stocks": 0,
+            "pool_id": "csi1000",
+            "schema_version": 1,
+            "source": "offline:contract-snapshot"
+          }
+        ],
+        "research_data_contract": {
+          "allowed_uses": [
+            "exploratory_research",
+            "paper_simulation"
+          ],
+          "available": false,
+          "classification": "single_source_research",
+          "live_eligible": false,
+          "research_trust_profile": "single_source_research_warning_only",
+          "risk_policy": "warning_only"
+        },
+        "research_pools": [],
+        "research_refresh_status": {
+          "status": "unknown"
+        }
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/execution/adapters/readiness": {
+    "status": 200
+  },
+  "GET /api/execution/live-readiness": {
+    "status": 200
+  },
+  "GET /api/experiments/": {
+    "body": {
+      "data": {
+        "items": [],
+        "limit": "<count>",
+        "page": "<count>",
+        "sort_by": "created_at",
+        "sort_order": "desc",
+        "total": "<count>"
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/experiments/parameter-presets": {
+    "body": {
+      "data": {
+        "items": [],
+        "limit": "<count>",
+        "page": "<count>",
+        "total": "<count>"
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/experiments/parameter-presets/{preset_id}": {
+    "body": {
+      "detail": "参数方案不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/picker": {
+    "body": {
+      "data": [],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/experiments/recovery": {
+    "body": {
+      "data": {
+        "experiments": [],
+        "sweeps": []
+      }
+    },
+    "status": 200
+  },
+  "GET /api/experiments/sweep/{sweep_id}": {
+    "body": {
+      "detail": "参数扫描不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}/equity": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}/export": {
+    "body": {
+      "detail": {
+        "code": "experiment_not_found",
+        "message": "实验不存在"
+      }
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}/metrics": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}/models": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/experiments/{experiment_id}/trades": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/factor-research/catalog": {
+    "body": {
+      "data": [
+        {
+          "category": "liquidity",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "20 日平均成交额的对数。",
+          "direction": "high",
+          "factor_id": "liquidity_20",
+          "lookback": 20,
+          "name": "20 日流动性",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 20
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 20
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "amount"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        },
+        {
+          "category": "risk",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "20 日收益波动率的相反数。",
+          "direction": "high",
+          "factor_id": "low_volatility_20",
+          "lookback": 20,
+          "name": "20 日低波动",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 20
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 20
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "close"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        },
+        {
+          "category": "momentum",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "过去 20 个交易日收盘价收益率。",
+          "direction": "high",
+          "factor_id": "momentum_20",
+          "lookback": 20,
+          "name": "20 日动量",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 20
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 20
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "close"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        },
+        {
+          "category": "quality",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "20 日净价格变化相对逐日绝对变化的比例，衡量趋势路径效率。",
+          "direction": "high",
+          "factor_id": "price_efficiency_20",
+          "lookback": 20,
+          "name": "20 日价格效率",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 20
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 20
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "close"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        },
+        {
+          "category": "momentum",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "20 日收益除以同期日收益波动率，兼顾趋势方向与路径风险。",
+          "direction": "high",
+          "factor_id": "risk_adjusted_momentum_20",
+          "lookback": 20,
+          "name": "20 日风险调整动量",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 20
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 20
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "close"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        },
+        {
+          "category": "reversal",
+          "current": true,
+          "definition_digest": "<hash>",
+          "dependencies": [],
+          "deprecated": false,
+          "deprecated_at": null,
+          "description": "过去 5 个交易日收益率的相反数。",
+          "direction": "high",
+          "factor_id": "short_reversal_5",
+          "lookback": 5,
+          "name": "5 日反转",
+          "parameter_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "window": {
+                "const": 5
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "window": 5
+          },
+          "published_at": "<datetime>",
+          "required_fields": [
+            "close"
+          ],
+          "revision": "<id>",
+          "status": "published",
+          "supersedes": null,
+          "version": "1.0.0"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/factor-research/governance/audit": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/factor-research/protocols": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/factor-research/readiness": {
+    "body": {
+      "data": {
+        "limits": {
+          "max_horizon": 252,
+          "max_horizons": 12,
+          "max_window_days": 3653,
+          "quantiles": {
+            "max": 10,
+            "min": 2
+          }
+        },
+        "pools": [
+          {
+            "available_factor_ids": [],
+            "canonical_runtime_price_bound": false,
+            "date_end": null,
+            "date_start": null,
+            "descriptive_return_research_ready": false,
+            "disabled_reason": "daily_cache_missing",
+            "fields": [],
+            "label": "CSI300",
+            "n_dates": 0,
+            "n_stocks": 0,
+            "neutralization": {
+              "industry": {
+                "query_semantics": "one_verified_as_of_query_per_trading_date",
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "modes": {
+                "industry": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "industry+size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "none": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                }
+              },
+              "schema_version": "factor-neutralization-readiness/v1",
+              "size": {
+                "available_fields": [],
+                "evidence": null,
+                "ready": false,
+                "reason": "point_in_time_size_field_missing",
+                "required_provenance_schema": "point-in-time-field-provenance/v1",
+                "schema_version": "factor-neutralization-readiness/v1",
+                "selected_field": null
+              }
+            },
+            "neutralization_ready": false,
+            "point_in_time": {
+              "industry": {
+                "neutralization_ready": false,
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "limitations": [
+                "price_cache_unavailable"
+              ],
+              "ready": false,
+              "schema_version": "point-in-time-readiness/v1",
+              "security_master": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              },
+              "universe": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              }
+            },
+            "pool_id": "csi300",
+            "price_ledger": {
+              "canonical_evidence_sha256": null,
+              "canonical_price_consistency": false,
+              "corporate_action_authoritative": false,
+              "data_gaps": [
+                {
+                  "code": "ledger_unavailable",
+                  "remediation": "supply the missing governed evidence and rerun validation"
+                },
+                {
+                  "code": "corporate_action_authoritative_evidence_missing",
+                  "remediation": "complete licensed artifact governance for event and no-event coverage"
+                }
+              ],
+              "descriptive_return_research_ready": false,
+              "dual_ledger_complete": false,
+              "ledger_available": false,
+              "limitations": [
+                "ledger_unavailable",
+                "corporate_action_authoritative_evidence_missing"
+              ],
+              "ready_for_adjusted_price_return_research": false,
+              "ready_for_execution_simulation": false,
+              "ready_for_real_tuning": false,
+              "ready_for_return_research": false,
+              "ready_for_unbiased_research": false,
+              "ready_for_unbiased_return_research": false,
+              "reason": "ledger_unavailable",
+              "required_end": "<date>",
+              "required_start": "<date>",
+              "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+              "roles": {
+                "raw_execution": {
+                  "adjustment": "raw",
+                  "available": false,
+                  "trusted": false
+                },
+                "research_adjusted": {
+                  "adjustment": "hfq",
+                  "available": false,
+                  "trusted": false
+                }
+              },
+              "schema_version": "dual-price-ledger-readiness/v1",
+              "scope_id": "csi300"
+            },
+            "price_role": {
+              "adjustment": null,
+              "role": "unverified"
+            },
+            "ready": false,
+            "ready_for_real_tuning": false,
+            "ready_for_static_adjusted_return_research": false,
+            "ready_for_unbiased_research": false,
+            "ready_for_unbiased_return_research": false,
+            "return_research_semantics": "factor_runtime_reads_legacy_parquet_not_canonical_ledger;pit_or_price_readiness_alone_cannot_promote",
+            "schema_version": 1,
+            "source_evidence_levels": [],
+            "source_providers": [],
+            "source_trust": "unverified"
+          },
+          {
+            "available_factor_ids": [],
+            "canonical_runtime_price_bound": false,
+            "date_end": null,
+            "date_start": null,
+            "descriptive_return_research_ready": false,
+            "disabled_reason": "daily_cache_missing",
+            "fields": [],
+            "label": "CSI500",
+            "n_dates": 0,
+            "n_stocks": 0,
+            "neutralization": {
+              "industry": {
+                "query_semantics": "one_verified_as_of_query_per_trading_date",
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "modes": {
+                "industry": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "industry+size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "none": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                }
+              },
+              "schema_version": "factor-neutralization-readiness/v1",
+              "size": {
+                "available_fields": [],
+                "evidence": null,
+                "ready": false,
+                "reason": "point_in_time_size_field_missing",
+                "required_provenance_schema": "point-in-time-field-provenance/v1",
+                "schema_version": "factor-neutralization-readiness/v1",
+                "selected_field": null
+              }
+            },
+            "neutralization_ready": false,
+            "point_in_time": {
+              "industry": {
+                "neutralization_ready": false,
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "limitations": [
+                "price_cache_unavailable"
+              ],
+              "ready": false,
+              "schema_version": "point-in-time-readiness/v1",
+              "security_master": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              },
+              "universe": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              }
+            },
+            "pool_id": "csi500",
+            "price_ledger": {
+              "canonical_evidence_sha256": null,
+              "canonical_price_consistency": false,
+              "corporate_action_authoritative": false,
+              "data_gaps": [
+                {
+                  "code": "ledger_unavailable",
+                  "remediation": "supply the missing governed evidence and rerun validation"
+                },
+                {
+                  "code": "corporate_action_authoritative_evidence_missing",
+                  "remediation": "complete licensed artifact governance for event and no-event coverage"
+                }
+              ],
+              "descriptive_return_research_ready": false,
+              "dual_ledger_complete": false,
+              "ledger_available": false,
+              "limitations": [
+                "ledger_unavailable",
+                "corporate_action_authoritative_evidence_missing"
+              ],
+              "ready_for_adjusted_price_return_research": false,
+              "ready_for_execution_simulation": false,
+              "ready_for_real_tuning": false,
+              "ready_for_return_research": false,
+              "ready_for_unbiased_research": false,
+              "ready_for_unbiased_return_research": false,
+              "reason": "ledger_unavailable",
+              "required_end": "<date>",
+              "required_start": "<date>",
+              "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+              "roles": {
+                "raw_execution": {
+                  "adjustment": "raw",
+                  "available": false,
+                  "trusted": false
+                },
+                "research_adjusted": {
+                  "adjustment": "hfq",
+                  "available": false,
+                  "trusted": false
+                }
+              },
+              "schema_version": "dual-price-ledger-readiness/v1",
+              "scope_id": "csi500"
+            },
+            "price_role": {
+              "adjustment": null,
+              "role": "unverified"
+            },
+            "ready": false,
+            "ready_for_real_tuning": false,
+            "ready_for_static_adjusted_return_research": false,
+            "ready_for_unbiased_research": false,
+            "ready_for_unbiased_return_research": false,
+            "return_research_semantics": "factor_runtime_reads_legacy_parquet_not_canonical_ledger;pit_or_price_readiness_alone_cannot_promote",
+            "schema_version": 1,
+            "source_evidence_levels": [],
+            "source_providers": [],
+            "source_trust": "unverified"
+          },
+          {
+            "available_factor_ids": [],
+            "canonical_runtime_price_bound": false,
+            "date_end": null,
+            "date_start": null,
+            "descriptive_return_research_ready": false,
+            "disabled_reason": "daily_cache_missing",
+            "fields": [],
+            "label": "CSI800",
+            "n_dates": 0,
+            "n_stocks": 0,
+            "neutralization": {
+              "industry": {
+                "query_semantics": "one_verified_as_of_query_per_trading_date",
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "modes": {
+                "industry": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "industry+size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "none": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                }
+              },
+              "schema_version": "factor-neutralization-readiness/v1",
+              "size": {
+                "available_fields": [],
+                "evidence": null,
+                "ready": false,
+                "reason": "point_in_time_size_field_missing",
+                "required_provenance_schema": "point-in-time-field-provenance/v1",
+                "schema_version": "factor-neutralization-readiness/v1",
+                "selected_field": null
+              }
+            },
+            "neutralization_ready": false,
+            "point_in_time": {
+              "industry": {
+                "neutralization_ready": false,
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "limitations": [
+                "price_cache_unavailable"
+              ],
+              "ready": false,
+              "schema_version": "point-in-time-readiness/v1",
+              "security_master": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              },
+              "universe": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              }
+            },
+            "pool_id": "csi800",
+            "price_ledger": {
+              "canonical_evidence_sha256": null,
+              "canonical_price_consistency": false,
+              "corporate_action_authoritative": false,
+              "data_gaps": [
+                {
+                  "code": "ledger_unavailable",
+                  "remediation": "supply the missing governed evidence and rerun validation"
+                },
+                {
+                  "code": "corporate_action_authoritative_evidence_missing",
+                  "remediation": "complete licensed artifact governance for event and no-event coverage"
+                }
+              ],
+              "descriptive_return_research_ready": false,
+              "dual_ledger_complete": false,
+              "ledger_available": false,
+              "limitations": [
+                "ledger_unavailable",
+                "corporate_action_authoritative_evidence_missing"
+              ],
+              "ready_for_adjusted_price_return_research": false,
+              "ready_for_execution_simulation": false,
+              "ready_for_real_tuning": false,
+              "ready_for_return_research": false,
+              "ready_for_unbiased_research": false,
+              "ready_for_unbiased_return_research": false,
+              "reason": "ledger_unavailable",
+              "required_end": "<date>",
+              "required_start": "<date>",
+              "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+              "roles": {
+                "raw_execution": {
+                  "adjustment": "raw",
+                  "available": false,
+                  "trusted": false
+                },
+                "research_adjusted": {
+                  "adjustment": "hfq",
+                  "available": false,
+                  "trusted": false
+                }
+              },
+              "schema_version": "dual-price-ledger-readiness/v1",
+              "scope_id": "csi800"
+            },
+            "price_role": {
+              "adjustment": null,
+              "role": "unverified"
+            },
+            "ready": false,
+            "ready_for_real_tuning": false,
+            "ready_for_static_adjusted_return_research": false,
+            "ready_for_unbiased_research": false,
+            "ready_for_unbiased_return_research": false,
+            "return_research_semantics": "factor_runtime_reads_legacy_parquet_not_canonical_ledger;pit_or_price_readiness_alone_cannot_promote",
+            "schema_version": 1,
+            "source_evidence_levels": [],
+            "source_providers": [],
+            "source_trust": "unverified"
+          },
+          {
+            "available_factor_ids": [],
+            "canonical_runtime_price_bound": false,
+            "date_end": null,
+            "date_start": null,
+            "descriptive_return_research_ready": false,
+            "disabled_reason": "daily_cache_missing",
+            "fields": [],
+            "label": "CSI1000",
+            "n_dates": 0,
+            "n_stocks": 0,
+            "neutralization": {
+              "industry": {
+                "query_semantics": "one_verified_as_of_query_per_trading_date",
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "modes": {
+                "industry": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "industry+size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "none": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                }
+              },
+              "schema_version": "factor-neutralization-readiness/v1",
+              "size": {
+                "available_fields": [],
+                "evidence": null,
+                "ready": false,
+                "reason": "point_in_time_size_field_missing",
+                "required_provenance_schema": "point-in-time-field-provenance/v1",
+                "schema_version": "factor-neutralization-readiness/v1",
+                "selected_field": null
+              }
+            },
+            "neutralization_ready": false,
+            "point_in_time": {
+              "industry": {
+                "neutralization_ready": false,
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "limitations": [
+                "price_cache_unavailable"
+              ],
+              "ready": false,
+              "schema_version": "point-in-time-readiness/v1",
+              "security_master": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              },
+              "universe": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              }
+            },
+            "pool_id": "csi1000",
+            "price_ledger": {
+              "canonical_evidence_sha256": null,
+              "canonical_price_consistency": false,
+              "corporate_action_authoritative": false,
+              "data_gaps": [
+                {
+                  "code": "ledger_unavailable",
+                  "remediation": "supply the missing governed evidence and rerun validation"
+                },
+                {
+                  "code": "corporate_action_authoritative_evidence_missing",
+                  "remediation": "complete licensed artifact governance for event and no-event coverage"
+                }
+              ],
+              "descriptive_return_research_ready": false,
+              "dual_ledger_complete": false,
+              "ledger_available": false,
+              "limitations": [
+                "ledger_unavailable",
+                "corporate_action_authoritative_evidence_missing"
+              ],
+              "ready_for_adjusted_price_return_research": false,
+              "ready_for_execution_simulation": false,
+              "ready_for_real_tuning": false,
+              "ready_for_return_research": false,
+              "ready_for_unbiased_research": false,
+              "ready_for_unbiased_return_research": false,
+              "reason": "ledger_unavailable",
+              "required_end": "<date>",
+              "required_start": "<date>",
+              "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+              "roles": {
+                "raw_execution": {
+                  "adjustment": "raw",
+                  "available": false,
+                  "trusted": false
+                },
+                "research_adjusted": {
+                  "adjustment": "hfq",
+                  "available": false,
+                  "trusted": false
+                }
+              },
+              "schema_version": "dual-price-ledger-readiness/v1",
+              "scope_id": "csi1000"
+            },
+            "price_role": {
+              "adjustment": null,
+              "role": "unverified"
+            },
+            "ready": false,
+            "ready_for_real_tuning": false,
+            "ready_for_static_adjusted_return_research": false,
+            "ready_for_unbiased_research": false,
+            "ready_for_unbiased_return_research": false,
+            "return_research_semantics": "factor_runtime_reads_legacy_parquet_not_canonical_ledger;pit_or_price_readiness_alone_cannot_promote",
+            "schema_version": 1,
+            "source_evidence_levels": [],
+            "source_providers": [],
+            "source_trust": "unverified"
+          },
+          {
+            "available_factor_ids": [],
+            "canonical_runtime_price_bound": false,
+            "date_end": null,
+            "date_start": null,
+            "descriptive_return_research_ready": false,
+            "disabled_reason": "daily_cache_missing",
+            "fields": [],
+            "label": "ALL_A",
+            "n_dates": 0,
+            "n_stocks": 0,
+            "neutralization": {
+              "industry": {
+                "query_semantics": "one_verified_as_of_query_per_trading_date",
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "modes": {
+                "industry": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "industry+size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "none": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                },
+                "size": {
+                  "ready": false,
+                  "reason": "daily_cache_missing"
+                }
+              },
+              "schema_version": "factor-neutralization-readiness/v1",
+              "size": {
+                "available_fields": [],
+                "evidence": null,
+                "ready": false,
+                "reason": "point_in_time_size_field_missing",
+                "required_provenance_schema": "point-in-time-field-provenance/v1",
+                "schema_version": "factor-neutralization-readiness/v1",
+                "selected_field": null
+              }
+            },
+            "neutralization_ready": false,
+            "point_in_time": {
+              "industry": {
+                "neutralization_ready": false,
+                "ready": false,
+                "reason": "price_cache_unavailable",
+                "scope_id": "cninfo_008001"
+              },
+              "limitations": [
+                "price_cache_unavailable"
+              ],
+              "ready": false,
+              "schema_version": "point-in-time-readiness/v1",
+              "security_master": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              },
+              "universe": {
+                "ready": false,
+                "reason": "price_cache_unavailable"
+              }
+            },
+            "pool_id": "all_a",
+            "price_ledger": {
+              "canonical_evidence_sha256": null,
+              "canonical_price_consistency": false,
+              "corporate_action_authoritative": false,
+              "data_gaps": [
+                {
+                  "code": "ledger_unavailable",
+                  "remediation": "supply the missing governed evidence and rerun validation"
+                },
+                {
+                  "code": "corporate_action_authoritative_evidence_missing",
+                  "remediation": "complete licensed artifact governance for event and no-event coverage"
+                }
+              ],
+              "descriptive_return_research_ready": false,
+              "dual_ledger_complete": false,
+              "ledger_available": false,
+              "limitations": [
+                "ledger_unavailable",
+                "corporate_action_authoritative_evidence_missing"
+              ],
+              "ready_for_adjusted_price_return_research": false,
+              "ready_for_execution_simulation": false,
+              "ready_for_real_tuning": false,
+              "ready_for_return_research": false,
+              "ready_for_unbiased_research": false,
+              "ready_for_unbiased_return_research": false,
+              "reason": "ledger_unavailable",
+              "required_end": "<date>",
+              "required_start": "<date>",
+              "return_research_semantics": "price_role_only_requires_separate_point_in_time_binding",
+              "roles": {
+                "raw_execution": {
+                  "adjustment": "raw",
+                  "available": false,
+                  "trusted": false
+                },
+                "research_adjusted": {
+                  "adjustment": "hfq",
+                  "available": false,
+                  "trusted": false
+                }
+              },
+              "schema_version": "dual-price-ledger-readiness/v1",
+              "scope_id": "all_a"
+            },
+            "price_role": {
+              "adjustment": null,
+              "role": "unverified"
+            },
+            "ready": false,
+            "ready_for_real_tuning": false,
+            "ready_for_static_adjusted_return_research": false,
+            "ready_for_unbiased_research": false,
+            "ready_for_unbiased_return_research": false,
+            "return_research_semantics": "factor_runtime_reads_legacy_parquet_not_canonical_ledger;pit_or_price_readiness_alone_cannot_promote",
+            "schema_version": 1,
+            "source_evidence_levels": [],
+            "source_providers": [],
+            "source_trust": "unverified"
+          }
+        ],
+        "ready": false,
+        "schema_version": "factor-research-readiness/v1"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/factor-research/runs": {
+    "body": {
+      "data": {
+        "items": [],
+        "page": "<count>",
+        "page_size": "<count>",
+        "total": "<count>"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/factor-research/runs/{run_id}": {
+    "body": {
+      "detail": "研究运行不存在"
+    },
+    "status": 404
+  },
+  "GET /api/factor-research/runs/{run_id}/export": {
+    "body": {
+      "detail": "研究运行不存在"
+    },
+    "status": 404
+  },
+  "GET /api/factor-research/strategies/{strategy_id}/versions": {
+    "body": {
+      "detail": "策略不存在；legacy_unbound 策略没有可晋级版本链"
+    },
+    "status": 404
+  },
+  "GET /api/health": {
+    "status": 200
+  },
+  "GET /api/jobs/": {
+    "body": {
+      "data": {
+        "items": [],
+        "page": "<count>",
+        "page_size": "<count>",
+        "total": "<count>"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/jobs/observability": {
+    "status": 200
+  },
+  "GET /api/jobs/summary": {
+    "status": 200
+  },
+  "GET /api/jobs/{job_id}": {
+    "body": {
+      "detail": "任务不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/remote-training/tasks": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/remote-training/tasks/{task_uuid}": {
+    "body": {
+      "detail": "远程训练任务不存在"
+    },
+    "status": 404
+  },
+  "GET /api/remote-training/tasks/{task_uuid}/bundle": {
+    "body": {
+      "detail": "缺少 X-Training-Token"
+    },
+    "status": 401
+  },
+  "GET /api/remote-training/tasks/{task_uuid}/data": {
+    "body": {
+      "detail": "缺少 X-Training-Token"
+    },
+    "status": 401
+  },
+  "GET /api/research/experiments/{experiment_id}/manifest": {
+    "body": {
+      "detail": "实验不存在"
+    },
+    "status": 404
+  },
+  "GET /api/research/experiments/{experiment_id}/robustness": {
+    "body": {
+      "detail": "实验不存在"
+    },
+    "status": 404
+  },
+  "GET /api/research/strategy-correlation": {
+    "body": {
+      "detail": [
+        {
+          "input": "1,2",
+          "loc": [
+            "query",
+            "experiment_ids",
+            0
+          ],
+          "msg": "Input should be a valid integer, unable to parse string as an integer",
+          "type": "int_parsing"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "GET /api/research/workflows/audit/events": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^(hypothesis|group|trial|report|promotion)$"
+          },
+          "input": "experiment",
+          "loc": [
+            "query",
+            "entity_type"
+          ],
+          "msg": "String should match pattern '^(hypothesis|group|trial|report|promotion)$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "GET /api/research/workflows/groups/{group_id}": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "GET /api/research/workflows/hypotheses/{hypothesis_id}": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "GET /api/research/workflows/promotions/{promotion_id}": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "GET /api/strategies/": {
+    "body": {
+      "data": [
+        {
+          "category": "factor",
+          "description": "以 Amihud 非流动性或成交额衡量流动性，每月选择高流动性股票。",
+          "display_name": "流动性因子",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 21,
+              "description": "流动性回看交易日",
+              "max": 126,
+              "min": 5,
+              "name": "lookback_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "amihud",
+                "amount"
+              ],
+              "default": "amihud",
+              "description": "流动性口径",
+              "max": null,
+              "min": null,
+              "name": "method",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入截面排名比例",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "liquidity_factor_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "单因子",
+            "流动性",
+            "Amihud",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "factor",
+          "description": "按截至前一交易日的历史波动率逆序排名，每月买入低波动股票。",
+          "display_name": "低波动因子",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 120,
+              "description": "波动率回看交易日",
+              "max": 252,
+              "min": 20,
+              "name": "lookback_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "standard",
+                "downside"
+              ],
+              "default": "standard",
+              "description": "波动率口径",
+              "max": null,
+              "min": null,
+              "name": "vol_method",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入截面排名比例",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "low_volatility_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "单因子",
+            "低波动",
+            "月度调仓",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "factor",
+          "description": "将反转、低波动、流动性和动量的截面排名按配置权重合成。",
+          "display_name": "多因子综合评分",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": true,
+              "description": "启用短期反转",
+              "max": null,
+              "min": null,
+              "name": "use_short_reversal",
+              "required": true,
+              "step": null,
+              "type": "bool"
+            },
+            {
+              "choices": null,
+              "default": true,
+              "description": "启用低波动",
+              "max": null,
+              "min": null,
+              "name": "use_low_volatility",
+              "required": true,
+              "step": null,
+              "type": "bool"
+            },
+            {
+              "choices": null,
+              "default": true,
+              "description": "启用流动性",
+              "max": null,
+              "min": null,
+              "name": "use_liquidity",
+              "required": true,
+              "step": null,
+              "type": "bool"
+            },
+            {
+              "choices": null,
+              "default": true,
+              "description": "启用截面动量",
+              "max": null,
+              "min": null,
+              "name": "use_momentum",
+              "required": true,
+              "step": null,
+              "type": "bool"
+            },
+            {
+              "choices": null,
+              "default": 1.0,
+              "description": "短期反转权重",
+              "max": null,
+              "min": 0,
+              "name": "short_reversal_weight",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1.0,
+              "description": "低波动权重",
+              "max": null,
+              "min": 0,
+              "name": "low_volatility_weight",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1.0,
+              "description": "流动性权重",
+              "max": null,
+              "min": 0,
+              "name": "liquidity_weight",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1.0,
+              "description": "截面动量权重",
+              "max": null,
+              "min": 0,
+              "name": "momentum_weight",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入截面排名比例",
+              "max": 1,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "multi_factor_score_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "多因子",
+            "截面排名",
+            "可解释",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "factor",
+          "description": "参考 AlphaMaster 策略框架的 13 维因子 + GBDT 排序策略。计算 13 个核心量化因子（动量/波动/换手/RSI/均线偏离/回撤等），用 GradientBoostingRegressor 训练截面排序模型。默认月频调仓（30 交易日），买入预测分数最高的 Top K 只股票。日频已被验证报告证伪（-75.64%），月频则展现真实 alpha（+60.30%）。",
+          "display_name": "AlphaMaster GBR 因子策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 200,
+              "description": "GBR 树的数量",
+              "max": 500,
+              "min": 50,
+              "name": "n_estimators",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 4,
+              "description": "树的最大深度",
+              "max": 8,
+              "min": 2,
+              "name": "max_depth",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.05,
+              "description": "学习率",
+              "max": 0.3,
+              "min": 0.01,
+              "name": "learning_rate",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 30,
+              "description": "买入股票数量",
+              "max": 100,
+              "min": 5,
+              "name": "top_k",
+              "required": true,
+              "step": 5,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 30,
+              "description": "调仓周期（交易日）",
+              "max": 60,
+              "min": 5,
+              "name": "rebalance_days",
+              "required": true,
+              "step": 5,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 12,
+              "description": "最小训练数据长度（月）",
+              "max": 36,
+              "min": 6,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "monthly",
+          "strategy_id": "alphamaster_gbr_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "因子投资",
+            "GBR",
+            "AlphaMaster",
+            "截面选股",
+            "GradientBoosting",
+            "月频"
+          ],
+          "training_mode": "periodic",
+          "version": "1.0.0"
+        },
+        {
+          "category": "factor",
+          "description": "计算跳过最近一个月的 12 个月动量，每月买入截面强势股票。",
+          "display_name": "截面动量因子",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 12,
+              "description": "动量回看月数",
+              "max": 24,
+              "min": 2,
+              "name": "lookback_months",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "跳过最近月数",
+              "max": 6,
+              "min": 0,
+              "name": "skip_months",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入截面排名比例",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "momentum_cross_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "单因子",
+            "截面动量",
+            "月度调仓",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "factor",
+          "description": "按截至前一交易日的短期跌幅截面排序，每月买入跌幅最大的股票。",
+          "display_name": "短期反转因子",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 21,
+              "description": "反转收益回看交易日",
+              "max": 126,
+              "min": 5,
+              "name": "lookback_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入截面排名比例",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "short_reversal_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "单因子",
+            "反转",
+            "月度调仓",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "composite",
+          "description": "按经审查的单策略实验参数与静态权重聚合信号；来源实验和 PIT 清单哈希随组合参数固化。",
+          "display_name": "研究证据静态权重组合",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": "[{\"params\":{},\"strategy_id\":\"ma_cross_v1\"},{\"params\":{},\"strategy_id\":\"rsi_reversal_v1\"},{\"params\":{},\"strategy_id\":\"macd_signal_v1\"}]",
+              "description": "JSON 子策略定义（策略 ID、参数及可选来源清单）",
+              "max": null,
+              "min": null,
+              "name": "component_specs",
+              "required": true,
+              "step": null,
+              "type": "str"
+            },
+            {
+              "choices": null,
+              "default": "[0.3333333333333333,0.3333333333333333,0.3333333333333333]",
+              "description": "与子策略顺序一致的 JSON 非负权重数组",
+              "max": null,
+              "min": null,
+              "name": "static_weights",
+              "required": true,
+              "step": null,
+              "type": "str"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "composite_research_weighted_v1",
+          "sub_strategies": [
+            {
+              "role": "可替换的原子信号源",
+              "strategy_id": "ma_cross_v1"
+            },
+            {
+              "role": "可替换的原子信号源",
+              "strategy_id": "rsi_reversal_v1"
+            },
+            {
+              "role": "可替换的原子信号源",
+              "strategy_id": "macd_signal_v1"
+            }
+          ],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "组合策略",
+            "静态权重",
+            "研究证据",
+            "PIT"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "composite",
+          "description": "以股票池等权指数相对 MA200 判断状态，在趋势族与防御族间切换权重。",
+          "display_name": "市场状态策略组合",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": "ma_cross_v1,rsi_reversal_v1,macd_signal_v1,donchian_breakout_v1,short_reversal_v1,low_volatility_v1",
+              "description": "逗号分隔的原子子策略 ID",
+              "max": null,
+              "min": null,
+              "name": "sub_strategy_ids",
+              "required": true,
+              "step": null,
+              "type": "str"
+            },
+            {
+              "choices": null,
+              "default": 200,
+              "description": "市场状态均线周期",
+              "max": 252,
+              "min": 60,
+              "name": "regime_ma_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.7,
+              "description": "主导策略族权重",
+              "max": 1,
+              "min": 0.5,
+              "name": "dominant_weight",
+              "required": true,
+              "step": null,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "composite_regime_v1",
+          "sub_strategies": [
+            {
+              "role": "规则型信号源",
+              "strategy_id": "ma_cross_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "rsi_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "macd_signal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "donchian_breakout_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "short_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "low_volatility_v1"
+            }
+          ],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "组合策略",
+            "市场状态",
+            "趋势防御切换"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "composite",
+          "description": "将多个规则型子策略的信号等权聚合。",
+          "display_name": "等权策略组合",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": "ma_cross_v1,rsi_reversal_v1,macd_signal_v1,donchian_breakout_v1,short_reversal_v1,low_volatility_v1",
+              "description": "逗号分隔的原子子策略 ID",
+              "max": null,
+              "min": null,
+              "name": "sub_strategy_ids",
+              "required": true,
+              "step": null,
+              "type": "str"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "composite_equal_v1",
+          "sub_strategies": [
+            {
+              "role": "规则型信号源",
+              "strategy_id": "ma_cross_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "rsi_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "macd_signal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "donchian_breakout_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "short_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "low_volatility_v1"
+            }
+          ],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "组合策略",
+            "等权",
+            "规则型"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "composite",
+          "description": "按各子策略过去 126 日纸面收益波动率的倒数动态加权。",
+          "display_name": "风险平价策略组合",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": "ma_cross_v1,rsi_reversal_v1,macd_signal_v1,donchian_breakout_v1,short_reversal_v1,low_volatility_v1",
+              "description": "逗号分隔的原子子策略 ID",
+              "max": null,
+              "min": null,
+              "name": "sub_strategy_ids",
+              "required": true,
+              "step": null,
+              "type": "str"
+            },
+            {
+              "choices": null,
+              "default": 126,
+              "description": "波动率窗口",
+              "max": 252,
+              "min": 20,
+              "name": "lookback_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "composite_riskparity_v1",
+          "sub_strategies": [
+            {
+              "role": "规则型信号源",
+              "strategy_id": "ma_cross_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "rsi_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "macd_signal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "donchian_breakout_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "short_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "low_volatility_v1"
+            }
+          ],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "组合策略",
+            "风险平价",
+            "动态权重"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "composite",
+          "description": "按子策略过去 63 日正向 Sharpe 动态分配权重，每月更新。",
+          "display_name": "动量优选策略组合",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": "ma_cross_v1,rsi_reversal_v1,macd_signal_v1,donchian_breakout_v1,short_reversal_v1,low_volatility_v1",
+              "description": "逗号分隔的原子子策略 ID",
+              "max": null,
+              "min": null,
+              "name": "sub_strategy_ids",
+              "required": true,
+              "step": null,
+              "type": "str"
+            },
+            {
+              "choices": null,
+              "default": 63,
+              "description": "策略动量窗口",
+              "max": 252,
+              "min": 20,
+              "name": "lookback_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "composite_momentum_v1",
+          "sub_strategies": [
+            {
+              "role": "规则型信号源",
+              "strategy_id": "ma_cross_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "rsi_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "macd_signal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "donchian_breakout_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "short_reversal_v1"
+            },
+            {
+              "role": "规则型信号源",
+              "strategy_id": "low_volatility_v1"
+            }
+          ],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "组合策略",
+            "策略动量",
+            "动态权重"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "ml",
+          "description": "基于 Alpha158 量化因子集和 XGBoost 极端梯度提升树的机器学习策略。计算 50+ 个核心因子，用 XGBoost 训练排序模型预测下月收益率。XGBoost 的层级优先生长策略和 L1/L2 正则化使其在小数据集上更鲁棒。采用 Walk-Forward 方式每月重新训练，买入预测排名 Top K% 的股票。作为 LightGBM 版本的对照实验，验证模型选择对因子策略的影响。",
+          "display_name": "Alpha158 + XGBoost 因子策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 200,
+              "description": "XGBoost 树的数量",
+              "max": 500,
+              "min": 50,
+              "name": "n_estimators",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 5,
+              "description": "树的最大深度",
+              "max": 10,
+              "min": 3,
+              "name": "max_depth",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.05,
+              "description": "学习率",
+              "max": 0.3,
+              "min": 0.01,
+              "name": "learning_rate",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入股票比例（Top K%）",
+              "max": 0.3,
+              "min": 0.05,
+              "name": "top_k_pct",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "周期模型的重训练间隔（月）",
+              "max": 12,
+              "min": 1,
+              "name": "retrain_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "expanding",
+                "rolling"
+              ],
+              "default": "expanding",
+              "description": "周期重训练窗口：扩展窗口或固定长度滚动窗口",
+              "max": null,
+              "min": null,
+              "name": "window_mode",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 36,
+              "description": "滚动训练窗口长度（月；仅 rolling 模式生效）",
+              "max": 120,
+              "min": 1,
+              "name": "rolling_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0,
+              "description": "标签结束与预测日之间额外保留的交易日隔离带",
+              "max": 60,
+              "min": 0,
+              "name": "embargo_days",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "从拟合窗口尾部留出的独立验证集长度（月）",
+              "max": 24,
+              "min": 0,
+              "name": "validation_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 12,
+              "description": "最小训练数据长度（月）",
+              "max": 120,
+              "min": 1,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.02,
+              "description": "验证集 RankIC 最低门槛；低于门槛禁止进入测试预测",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "min_validation_rank_ic",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "monthly",
+          "strategy_id": "alpha158_xgb_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "机器学习",
+            "XGBoost",
+            "Alpha158",
+            "因子投资",
+            "排序学习",
+            "Walk-Forward"
+          ],
+          "training_mode": "periodic",
+          "version": "1.0.0"
+        },
+        {
+          "category": "ml",
+          "description": "基于 Alpha158 量化因子集和 LightGBM 梯度提升树的机器学习策略。计算 50+ 个核心因子（动量/波动/换手/相关性等），用 LightGBM 训练排序模型预测下月收益率。采用 Walk-Forward 方式每月重新训练，买入预测排名 Top K% 的股票。LightGBM 的叶子优先生长策略使训练速度快且对大数据集效率高。",
+          "display_name": "Alpha158 + LightGBM 因子策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 200,
+              "description": "LightGBM 树的数量",
+              "max": 500,
+              "min": 50,
+              "name": "n_estimators",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 5,
+              "description": "树的最大深度",
+              "max": 10,
+              "min": 3,
+              "name": "max_depth",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.05,
+              "description": "学习率",
+              "max": 0.3,
+              "min": 0.01,
+              "name": "learning_rate",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入股票比例（Top K%）",
+              "max": 0.3,
+              "min": 0.05,
+              "name": "top_k_pct",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "周期模型的重训练间隔（月）",
+              "max": 12,
+              "min": 1,
+              "name": "retrain_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "expanding",
+                "rolling"
+              ],
+              "default": "expanding",
+              "description": "周期重训练窗口：扩展窗口或固定长度滚动窗口",
+              "max": null,
+              "min": null,
+              "name": "window_mode",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 36,
+              "description": "滚动训练窗口长度（月；仅 rolling 模式生效）",
+              "max": 120,
+              "min": 1,
+              "name": "rolling_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0,
+              "description": "标签结束与预测日之间额外保留的交易日隔离带",
+              "max": 60,
+              "min": 0,
+              "name": "embargo_days",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "从拟合窗口尾部留出的独立验证集长度（月）",
+              "max": 24,
+              "min": 0,
+              "name": "validation_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 12,
+              "description": "最小训练数据长度（月）",
+              "max": 120,
+              "min": 1,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.02,
+              "description": "验证集 RankIC 最低门槛；低于门槛禁止进入测试预测",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "min_validation_rank_ic",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "monthly",
+          "strategy_id": "alpha158_lgb_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "机器学习",
+            "LightGBM",
+            "Alpha158",
+            "因子投资",
+            "排序学习",
+            "Walk-Forward"
+          ],
+          "training_mode": "periodic",
+          "version": "1.0.0"
+        },
+        {
+          "category": "ml",
+          "description": "基于 LSTM 深度学习模型的排序策略。将股票过去 N 日的日收益率序列作为输入，通过双层 LSTM 网络自动学习时序依赖模式（趋势、反转、波动率聚集），预测下月上涨概率。模型在固定历史窗口完成一次训练并在实验期复用，买入预测概率最高的 Top K% 股票。相比传统技术指标，LSTM 能自动提取时序特征，无需人工构造。若 PyTorch 不可用则自动降级为 sklearn MLP。",
+          "display_name": "LSTM 深度学习排序策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 20,
+              "description": "输入序列长度（日）",
+              "max": 120,
+              "min": 20,
+              "name": "seq_len",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 32,
+              "description": "LSTM 隐藏层大小",
+              "max": 256,
+              "min": 16,
+              "name": "hidden_size",
+              "required": true,
+              "step": 16,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "LSTM 层数",
+              "max": 4,
+              "min": 1,
+              "name": "num_layers",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "Dropout 比例",
+              "max": 0.5,
+              "min": 0.0,
+              "name": "dropout",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.001,
+              "description": "学习率",
+              "max": 0.01,
+              "min": 0.0001,
+              "name": "learning_rate",
+              "required": true,
+              "step": 0.0001,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 10,
+              "description": "训练轮数",
+              "max": 200,
+              "min": 10,
+              "name": "epochs",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.05,
+              "description": "买入股票比例（Top K%）",
+              "max": 0.3,
+              "min": 0.05,
+              "name": "top_k_pct",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": [
+                "fixed"
+              ],
+              "default": "fixed",
+              "description": "一次训练使用用户指定的固定训练窗口",
+              "max": null,
+              "min": null,
+              "name": "window_mode",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 36,
+              "description": "滚动训练窗口长度（月；仅 rolling 模式生效）",
+              "max": 120,
+              "min": 1,
+              "name": "rolling_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0,
+              "description": "标签结束与预测日之间额外保留的交易日隔离带",
+              "max": 60,
+              "min": 0,
+              "name": "embargo_days",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "从拟合窗口尾部留出的独立验证集长度（月）",
+              "max": 24,
+              "min": 0,
+              "name": "validation_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 24,
+              "description": "最小训练数据长度（月）",
+              "max": 120,
+              "min": 1,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.02,
+              "description": "验证集 RankIC 最低门槛；低于门槛禁止进入测试预测",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "min_validation_rank_ic",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "never",
+          "strategy_id": "lstm_rank_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "深度学习",
+            "LSTM",
+            "时序预测",
+            "排序学习",
+            "一次训练",
+            "PyTorch"
+          ],
+          "training_mode": "train_once",
+          "version": "1.0.0"
+        },
+        {
+          "category": "ml",
+          "description": "使用 Alpha158 因子和 LightGBM LambdaRank，按交易日截面分组学习未来收益相对名次，并由平台按月 Walk-Forward 重训练。",
+          "display_name": "Alpha158 + LightGBM 排序学习",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 200,
+              "description": "树数量",
+              "max": 1000,
+              "min": 50,
+              "name": "n_estimators",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 31,
+              "description": "叶子数量",
+              "max": 255,
+              "min": 7,
+              "name": "num_leaves",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.05,
+              "description": "学习率",
+              "max": 0.3,
+              "min": 0.005,
+              "name": "learning_rate",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 21,
+              "description": "未来收益标签周期",
+              "max": 63,
+              "min": 5,
+              "name": "label_horizon_days",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入预测排名比例",
+              "max": 0.5,
+              "min": 0.01,
+              "name": "top_k_pct",
+              "required": true,
+              "step": null,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "周期模型的重训练间隔（月）",
+              "max": 12,
+              "min": 1,
+              "name": "retrain_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "expanding",
+                "rolling"
+              ],
+              "default": "expanding",
+              "description": "周期重训练窗口：扩展窗口或固定长度滚动窗口",
+              "max": null,
+              "min": null,
+              "name": "window_mode",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 36,
+              "description": "滚动训练窗口长度（月；仅 rolling 模式生效）",
+              "max": 120,
+              "min": 1,
+              "name": "rolling_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0,
+              "description": "标签结束与预测日之间额外保留的交易日隔离带",
+              "max": 60,
+              "min": 0,
+              "name": "embargo_days",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "从拟合窗口尾部留出的独立验证集长度（月）",
+              "max": 24,
+              "min": 0,
+              "name": "validation_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 12,
+              "description": "最小训练数据长度（月）",
+              "max": 120,
+              "min": 1,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.02,
+              "description": "验证集 RankIC 最低门槛；低于门槛禁止进入测试预测",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "min_validation_rank_ic",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "monthly",
+          "strategy_id": "alpha158_rank_lgb_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "机器学习",
+            "Alpha158",
+            "LightGBM",
+            "LambdaRank",
+            "周期重训练"
+          ],
+          "training_mode": "periodic",
+          "version": "1.0.0"
+        },
+        {
+          "category": "ml",
+          "description": "基于 Transformer 自注意力机制的深度学习排序策略。将股票过去 N 日日收益率序列输入 Transformer 编码器，通过多头自注意力同时关注序列所有位置的全局依赖关系，预测下月上涨概率。模型在固定历史窗口完成一次训练并在实验期复用。相比 LSTM，Transformer 能并行处理序列并捕捉长距离依赖。若 PyTorch 不可用则自动降级为 sklearn RandomForest。",
+          "display_name": "Transformer 深度学习排序策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 60,
+              "description": "输入序列长度（日）",
+              "max": 120,
+              "min": 20,
+              "name": "seq_len",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 64,
+              "description": "Transformer 隐藏层大小",
+              "max": 256,
+              "min": 16,
+              "name": "hidden_size",
+              "required": true,
+              "step": 16,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 2,
+              "description": "Transformer 编码层数",
+              "max": 4,
+              "min": 1,
+              "name": "num_layers",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 8,
+              "description": "多头注意力头数",
+              "max": 16,
+              "min": 2,
+              "name": "nhead",
+              "required": true,
+              "step": 2,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "Dropout 比例",
+              "max": 0.5,
+              "min": 0.0,
+              "name": "dropout",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.001,
+              "description": "学习率",
+              "max": 0.01,
+              "min": 0.0001,
+              "name": "learning_rate",
+              "required": true,
+              "step": 0.0001,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 50,
+              "description": "训练轮数",
+              "max": 200,
+              "min": 10,
+              "name": "epochs",
+              "required": true,
+              "step": 10,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.1,
+              "description": "买入股票比例（Top K%）",
+              "max": 0.3,
+              "min": 0.05,
+              "name": "top_k_pct",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            },
+            {
+              "choices": [
+                "fixed"
+              ],
+              "default": "fixed",
+              "description": "一次训练使用用户指定的固定训练窗口",
+              "max": null,
+              "min": null,
+              "name": "window_mode",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 36,
+              "description": "滚动训练窗口长度（月；仅 rolling 模式生效）",
+              "max": 120,
+              "min": 1,
+              "name": "rolling_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0,
+              "description": "标签结束与预测日之间额外保留的交易日隔离带",
+              "max": 60,
+              "min": 0,
+              "name": "embargo_days",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 1,
+              "description": "从拟合窗口尾部留出的独立验证集长度（月）",
+              "max": 24,
+              "min": 0,
+              "name": "validation_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 12,
+              "description": "最小训练数据长度（月）",
+              "max": 120,
+              "min": 1,
+              "name": "min_train_months",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.02,
+              "description": "验证集 RankIC 最低门槛；低于门槛禁止进入测试预测",
+              "max": 1.0,
+              "min": 0.01,
+              "name": "min_validation_rank_ic",
+              "required": true,
+              "step": 0.01,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": true,
+          "retrain_frequency": "never",
+          "strategy_id": "transformer_rank_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "深度学习",
+            "Transformer",
+            "自注意力",
+            "排序学习",
+            "一次训练",
+            "PyTorch"
+          ],
+          "training_mode": "train_once",
+          "version": "1.0.0"
+        },
+        {
+          "category": "portfolio",
+          "description": "基于倒波动率加权的风险平价组合策略。计算每只股票过去 N 日的日收益率波动率，按 1/波动率 进行权重分配，使得每只股票对组合的风险贡献相等。波动率越低的股票权重越大（需更多仓位才能贡献同等风险），月度再平衡。本质是风险预算分配框架，自动偏向低波动股票，降低组合回撤。",
+          "display_name": "风险平价策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 63,
+              "description": "波动率回看窗口（日）",
+              "max": 252,
+              "min": 30,
+              "name": "lookback",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": [
+                "monthly",
+                "weekly"
+              ],
+              "default": "monthly",
+              "description": "再平衡频率",
+              "max": null,
+              "min": null,
+              "name": "rebalance_frequency",
+              "required": true,
+              "step": null,
+              "type": "choice"
+            },
+            {
+              "choices": null,
+              "default": 0.0,
+              "description": "最低信号分数阈值（低于此值的权重忽略）",
+              "max": 1.0,
+              "min": 0.0,
+              "name": "min_score",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "target_weights",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "risk_parity_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "风险平价",
+            "组合优化",
+            "低波动",
+            "资产配置",
+            "再平衡",
+            "风险管理"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "technical",
+          "description": "经典 MACD 金叉死叉策略。计算 DIF（12日EMA - 26日EMA）和 DEA（DIF的9日EMA），DIF上穿DEA形成金叉产生买入信号，DIF下穿DEA形成死叉产生卖出信号。信号强度基于柱状图（DIF-DEA）的相对大小。MACD 兼具趋势和动量双重特性，是所有技术指标中表现最稳健的策略之一。",
+          "display_name": "MACD 金叉策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 8,
+              "description": "快线 EMA 周期",
+              "max": 20,
+              "min": 8,
+              "name": "fast",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 21,
+              "description": "慢线 EMA 周期",
+              "max": 40,
+              "min": 20,
+              "name": "slow",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 5,
+              "description": "信号线 EMA 周期",
+              "max": 15,
+              "min": 5,
+              "name": "signal",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.2,
+              "description": "最低信号分数阈值",
+              "max": 1.0,
+              "min": 0.0,
+              "name": "min_score",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "macd_signal_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "MACD",
+            "金叉死叉",
+            "趋势跟踪",
+            "动量",
+            "经典策略",
+            "技术指标"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "technical",
+          "description": "基于布林带的波动率突破策略。计算 N 日均线和上下 K 倍标准差轨道，收盘价突破上轨产生买入信号（波动扩张+方向确认），收盘价回落到中轨下方产生卖出信号（趋势衰竭止损）。中轨止损机制有效控制了回撤风险，适合趋势行情。",
+          "display_name": "布林带突破策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 60,
+              "description": "布林带计算周期（日）",
+              "max": 60,
+              "min": 10,
+              "name": "period",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 2.0,
+              "description": "标准差倍数（上/下轨宽度）",
+              "max": 3.0,
+              "min": 1.5,
+              "name": "std_multiplier",
+              "required": true,
+              "step": 0.1,
+              "type": "float"
+            },
+            {
+              "choices": null,
+              "default": 0.2,
+              "description": "最低信号分数阈值",
+              "max": 1.0,
+              "min": 0.0,
+              "name": "min_score",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "bollinger_breakout_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "布林带",
+            "波动率突破",
+            "趋势跟踪",
+            "止损",
+            "技术指标"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "technical",
+          "description": "经典双均线趋势跟踪策略。计算快速均线和慢速均线，金叉（快线上穿慢线）产生买入信号，死叉（快线下穿慢线）产生卖出信号。适用于趋势明显的市场，震荡市需配合过滤条件使用。",
+          "display_name": "双均线交叉策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 20,
+              "description": "快速均线周期（日）",
+              "max": 60,
+              "min": 5,
+              "name": "fast_period",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 30,
+              "description": "慢速均线周期（日）",
+              "max": 250,
+              "min": 20,
+              "name": "slow_period",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.0,
+              "description": "最低信号分数阈值（低于此值忽略）",
+              "max": 1.0,
+              "min": 0.0,
+              "name": "min_score",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "ma_cross_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "趋势跟踪",
+            "均线",
+            "经典策略",
+            "技术指标"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "technical",
+          "description": "以前一交易日确认的价格突破 55 日高点入场、跌破 20 日低点离场。",
+          "display_name": "唐奇安通道突破",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 55,
+              "description": "入场通道周期",
+              "max": 252,
+              "min": 5,
+              "name": "entry_period",
+              "required": true,
+              "step": null,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 20,
+              "description": "离场通道周期",
+              "max": 126,
+              "min": 2,
+              "name": "exit_period",
+              "required": true,
+              "step": null,
+              "type": "int"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "donchian_breakout_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "趋势跟踪",
+            "海龟交易",
+            "通道突破",
+            "无前视"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        },
+        {
+          "category": "technical",
+          "description": "基于 RSI 指标的均值回归策略。计算 RSI(默认14日)，当 RSI 跌破超卖阈值（默认30）时产生买入信号、预期超卖反弹；当 RSI 突破超买阈值（默认70）时产生卖出信号、预期超买回落。逆势交易逻辑，适合震荡行情，趋势市中需配合过滤条件使用。",
+          "display_name": "RSI 均值回归策略",
+          "execution_config": {
+            "defaults": {
+              "commission_rate": 0.0003,
+              "initial_capital": 1000000.0,
+              "lot_size": 100,
+              "max_positions": 20,
+              "min_commission": 5.0,
+              "slippage_rate": 0.001,
+              "stamp_duty_rate": 0.001,
+              "volume_participation": null
+            },
+            "param_key": "_execution"
+          },
+          "params": [
+            {
+              "choices": null,
+              "default": 7,
+              "description": "RSI 计算周期（日）",
+              "max": 30,
+              "min": 5,
+              "name": "period",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 25,
+              "description": "超卖阈值（RSI 低于此值视为超卖）",
+              "max": 40,
+              "min": 20,
+              "name": "oversold",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 75,
+              "description": "超买阈值（RSI 高于此值视为超买）",
+              "max": 80,
+              "min": 60,
+              "name": "overbought",
+              "required": true,
+              "step": 1,
+              "type": "int"
+            },
+            {
+              "choices": null,
+              "default": 0.0,
+              "description": "最低信号分数阈值",
+              "max": 1.0,
+              "min": 0.0,
+              "name": "min_score",
+              "required": true,
+              "step": 0.05,
+              "type": "float"
+            }
+          ],
+          "portfolio_signal_mode": "event_orders",
+          "requires_training": false,
+          "retrain_frequency": "never",
+          "strategy_id": "rsi_reversal_v1",
+          "sub_strategies": [],
+          "supported_modes": [
+            "batch"
+          ],
+          "tags": [
+            "均值回归",
+            "RSI",
+            "逆向投资",
+            "技术指标",
+            "超买超卖"
+          ],
+          "training_mode": "none",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/strategies/{strategy_id}": {
+    "body": {
+      "data": {
+        "category": "technical",
+        "deployment_count": 0,
+        "description": "经典双均线趋势跟踪策略。计算快速均线和慢速均线，金叉（快线上穿慢线）产生买入信号，死叉（快线下穿慢线）产生卖出信号。适用于趋势明显的市场，震荡市需配合过滤条件使用。",
+        "display_name": "双均线交叉策略",
+        "estimated_training_seconds": 0,
+        "execution_config": {
+          "defaults": {
+            "commission_rate": 0.0003,
+            "initial_capital": 1000000.0,
+            "lot_size": 100,
+            "max_positions": 20,
+            "min_commission": 5.0,
+            "slippage_rate": 0.001,
+            "stamp_duty_rate": 0.001,
+            "volume_participation": null
+          },
+          "param_key": "_execution"
+        },
+        "experiment_count": 0,
+        "integration_method": "",
+        "max_position_pct": 0.1,
+        "params": [
+          {
+            "choices": null,
+            "default": 20,
+            "description": "快速均线周期（日）",
+            "max": 60,
+            "min": 5,
+            "name": "fast_period",
+            "required": true,
+            "step": 1,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "default": 30,
+            "description": "慢速均线周期（日）",
+            "max": 250,
+            "min": 20,
+            "name": "slow_period",
+            "required": true,
+            "step": 1,
+            "type": "int"
+          },
+          {
+            "choices": null,
+            "default": 0.0,
+            "description": "最低信号分数阈值（低于此值忽略）",
+            "max": 1.0,
+            "min": 0.0,
+            "name": "min_score",
+            "required": true,
+            "step": 0.05,
+            "type": "float"
+          }
+        ],
+        "portfolio_signal_mode": "event_orders",
+        "requires_training": false,
+        "retrain_frequency": "never",
+        "strategy_id": "ma_cross_v1",
+        "sub_strategies": [],
+        "supported_modes": [
+          "batch"
+        ],
+        "supported_position_modes": [
+          "equal_weight"
+        ],
+        "tags": [
+          "趋势跟踪",
+          "均线",
+          "经典策略",
+          "技术指标"
+        ],
+        "training_mode": "none",
+        "version": "1.0.0"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/strategies/{strategy_id}/best-experiments": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/strategies/{strategy_id}/parent-strategies": {
+    "body": {
+      "data": [
+        {
+          "category": "composite",
+          "display_name": "研究证据静态权重组合",
+          "strategy_id": "composite_research_weighted_v1"
+        },
+        {
+          "category": "composite",
+          "display_name": "市场状态策略组合",
+          "strategy_id": "composite_regime_v1"
+        },
+        {
+          "category": "composite",
+          "display_name": "等权策略组合",
+          "strategy_id": "composite_equal_v1"
+        },
+        {
+          "category": "composite",
+          "display_name": "风险平价策略组合",
+          "strategy_id": "composite_riskparity_v1"
+        },
+        {
+          "category": "composite",
+          "display_name": "动量优选策略组合",
+          "strategy_id": "composite_momentum_v1"
+        }
+      ]
+    },
+    "status": 200
+  },
+  "GET /api/strategies/{strategy_id}/sub-strategies": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/trading/deployments": {
+    "body": {
+      "data": [],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/trading/deployments/{deployment_id}/model-lifecycle": {
+    "body": {
+      "detail": "部署不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/trading/deployments/{deployment_id}/models": {
+    "body": {
+      "detail": "部署不存在: 1"
+    },
+    "status": 404
+  },
+  "GET /api/trading/orders": {
+    "body": {
+      "data": {
+        "items": [],
+        "limit": "<count>",
+        "page": "<count>",
+        "total": "<count>"
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/trading/portfolios": {
+    "body": {
+      "data": [],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/trading/portfolios/{portfolio_id}/nav": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/trading/portfolios/{portfolio_id}/overview": {
+    "body": {
+      "detail": "Portfolio not found"
+    },
+    "status": 404
+  },
+  "GET /api/trading/portfolios/{portfolio_id}/strategy-analytics": {
+    "body": {
+      "detail": "Portfolio not found"
+    },
+    "status": 404
+  },
+  "GET /api/trading/portfolios/{portfolio_id}/versions": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/trading/positions": {
+    "body": {
+      "data": [],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/trading/signals": {
+    "body": {
+      "data": [],
+      "detail": null
+    },
+    "status": 200
+  },
+  "GET /api/trading/simulate/calendar": {
+    "body": {
+      "action": "refresh_in_data_center",
+      "code": "simulation_calendar_cache_integrity_invalid",
+      "detail": "中证500行情缓存完整性校验失败，请先在数据中心受控重建",
+      "pool_id": "csi500"
+    },
+    "status": 409
+  },
+  "GET /api/trading/simulate/runs": {
+    "body": {
+      "data": []
+    },
+    "status": 200
+  },
+  "GET /api/trading/simulate/schedule": {
+    "body": {
+      "data": {
+        "enabled": false,
+        "refresh_data": false,
+        "run_time": "18:05",
+        "scope": "active portfolios",
+        "timezone": "Asia/Shanghai"
+      }
+    },
+    "status": 200
+  },
+  "GET /api/trading/simulate/status": {
+    "body": {
+      "data": {
+        "status": "not_started"
+      }
+    },
+    "status": 200
+  },
+  "POST /api/admin/users": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "password"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/ai/analyze-backtest": {
+    "body": {
+      "detail": "实验不存在或未完成: 1"
+    },
+    "status": 404
+  },
+  "POST /api/ai/diagnose-error": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "POST /api/ai/explain-signal": {
+    "body": {
+      "detail": "策略不存在: probe"
+    },
+    "status": 404
+  },
+  "POST /api/ai/market-insight": {
+    "body": {
+      "detail": "组合不存在: 1"
+    },
+    "status": 404
+  },
+  "POST /api/ai/suggest-params": {
+    "body": {
+      "detail": "策略不存在: probe"
+    },
+    "status": 404
+  },
+  "POST /api/auth/login": {
+    "body": {
+      "detail": "用户名或密码错误"
+    },
+    "status": 401
+  },
+  "POST /api/auth/logout": {
+    "body": {
+      "data": {
+        "all_sessions": false,
+        "revoked_sessions": 1
+      }
+    },
+    "status": 200
+  },
+  "POST /api/auth/refresh": {
+    "body": {
+      "detail": "无效的 refresh token"
+    },
+    "status": 401
+  },
+  "POST /api/auth/register": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "password"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/cache/invalidate": {
+    "body": {
+      "data": {
+        "message": "缓存 csi500 已失效",
+        "pool_id": "csi500"
+      }
+    },
+    "status": 200
+  },
+  "POST /api/data/experiment-readiness": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "data_access_policy": "cache_only",
+            "pool_preset": "probe",
+            "price_purpose": "compatibility_research",
+            "research_trust_profile": "governed_production_pit",
+            "test_end": "probe",
+            "test_start": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, Unknown datetime string format, unable to parse: probe",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/industries/readiness": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "codes": [
+              "probe"
+            ]
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, 行业范围包含无效股票代码（仅支持6位代码及可选.SH/.SZ/.BJ后缀）：probe",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/industries/refresh": {
+    "body": {
+      "detail": [
+        {
+          "input": {},
+          "loc": [
+            "body",
+            "codes"
+          ],
+          "msg": "Field required",
+          "type": "missing"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/pit-governance/refresh": {
+    "body": {
+      "data": {
+        "automatic_activation": false,
+        "job_id": "<hash>",
+        "message": "PIT 治理证据刷新任务已提交；仅写入隔离区，不更新行情",
+        "mode": "async_pit_governance_quarantine"
+      }
+    },
+    "status": 200
+  },
+  "POST /api/data/point-in-time/automation/runs": {
+    "body": {
+      "detail": {
+        "code": "pit_automation_actor_invalid",
+        "message": "PIT automation service identity is not configured"
+      }
+    },
+    "status": 409
+  },
+  "POST /api/data/point-in-time/governance/artifacts": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/point-in-time/governance/auxiliary-artifacts": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/point-in-time/governance/packages": {
+    "body": {
+      "detail": {
+        "code": "pit_evidence_integrity_invalid",
+        "message": "package evidence manifest is missing"
+      }
+    },
+    "status": 409
+  },
+  "POST /api/data/point-in-time/governance/packages/{package_id}/decision": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "decision": "approved",
+            "expected_revision": 1,
+            "reason": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, approval attestations are required",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/point-in-time/governance/packages/{package_id}/import": {
+    "body": {
+      "detail": {
+        "code": "pit_evidence_state_invalid",
+        "message": "package identity is invalid"
+      }
+    },
+    "status": 409
+  },
+  "POST /api/data/point-in-time/imports": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "source",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^[0-9]{6}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "records",
+            0,
+            "security_code"
+          ],
+          "msg": "String should match pattern '^[0-9]{6}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/price-ledger/corporate-action-evidence": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9]{6}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "security_code"
+          ],
+          "msg": "String should match pattern '^[0-9]{6}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "source",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/price-ledger/imports": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "raw_source",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "research_source",
+            "content_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^[0-9]{6}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "raw_prices",
+            0,
+            "security_code"
+          ],
+          "msg": "String should match pattern '^[0-9]{6}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^[0-9]{6}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "research_prices",
+            0,
+            "security_code"
+          ],
+          "msg": "String should match pattern '^[0-9]{6}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/provider-licence-evidence/records": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "document_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/provider-licence-evidence/records/{record_sha256}/reviews": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "document_sha256"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/data/research-sources/refresh": {
+    "body": {
+      "data": {
+        "automatic_production_activation": false,
+        "job_id": "<hash>",
+        "message": "研究数据刷新已提交；可用于研究和模拟，所有风险将保留为告警",
+        "mode": "async_research_data_warning_only"
+      }
+    },
+    "status": 200
+  },
+  "POST /api/data/update": {
+    "body": {
+      "data": {
+        "automatic_activation": false,
+        "job_id": "<hash>",
+        "message": "PIT 行情/双价格账本更新任务已提交；未满足门禁将明确阻断",
+        "mode": "async_pit_market_data"
+      }
+    },
+    "status": 200
+  },
+  "POST /api/execution/orders/validate": {
+    "body": {
+      "detail": "执行适配器不存在: probe"
+    },
+    "status": 404
+  },
+  "POST /api/experiments/": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "name": "probe",
+            "pool_preset": null,
+            "strategy_id": "probe",
+            "test_end": "probe",
+            "test_start": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, Invalid isoformat string: 'probe'",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/experiments/compare": {
+    "body": {
+      "detail": "至少需要2个实验进行对比"
+    },
+    "status": 400
+  },
+  "POST /api/experiments/parameter-presets": {
+    "body": {
+      "detail": "策略不存在: probe"
+    },
+    "status": 404
+  },
+  "POST /api/experiments/sweep": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "name": null,
+            "param_grid": {},
+            "strategy_id": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, 必须提供显式选模窗口，或兼容用的完整 test 窗口",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/experiments/sweep/{sweep_id}/promote": {
+    "body": {
+      "detail": "参数扫描不存在或无权访问: 1"
+    },
+    "status": 404
+  },
+  "POST /api/experiments/sweep/{sweep_id}/repair": {
+    "body": {
+      "detail": "参数扫描不存在: 1"
+    },
+    "status": 404
+  },
+  "POST /api/factor-research/analyze": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "end": "probe",
+            "factor_id": "momentum_20",
+            "pool_custom_codes": [
+              "probe"
+            ],
+            "pool_preset": "csi300",
+            "start": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, start/end 必须使用 YYYY-MM-DD",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/catalog/{factor_id}/versions/{version}/deprecate": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "definition_digest"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/catalog/{factor_id}/versions/{version}/publish": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "definition_digest"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/compare": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "actual_length": 1,
+            "field_type": "List",
+            "min_length": 2
+          },
+          "input": [
+            "probe"
+          ],
+          "loc": [
+            "body",
+            "run_ids"
+          ],
+          "msg": "List should have at least 2 items after validation, not 1",
+          "type": "too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/export-strategy": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "components": [
+              {
+                "factor_id": "probe",
+                "weight": 1.0
+              }
+            ],
+            "name": "probe",
+            "research_run_ids": [
+              "probe"
+            ],
+            "top_k_pct": 0.1
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, components 包含未知或重复因子",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/jobs": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "end": "probe",
+            "factor_id": "momentum_20",
+            "pool_custom_codes": [
+              "probe"
+            ],
+            "pool_preset": "csi300",
+            "start": "probe"
+          },
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, start/end 必须使用 YYYY-MM-DD",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/protocols": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "payload",
+            "question"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "payload",
+            "hypothesis"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "payload",
+            "window",
+            "start"
+          ],
+          "msg": "String should match pattern '^\\d{4}-\\d{2}-\\d{2}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "payload",
+            "window",
+            "end"
+          ],
+          "msg": "String should match pattern '^\\d{4}-\\d{2}-\\d{2}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "ge": 2
+          },
+          "input": 1,
+          "loc": [
+            "body",
+            "payload",
+            "implementation",
+            "quantiles"
+          ],
+          "msg": "Input should be greater than or equal to 2",
+          "type": "greater_than_equal"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/protocols/{protocol_id}/versions": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "payload",
+            "question"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "payload",
+            "hypothesis"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "payload",
+            "window",
+            "start"
+          ],
+          "msg": "String should match pattern '^\\d{4}-\\d{2}-\\d{2}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "payload",
+            "window",
+            "end"
+          ],
+          "msg": "String should match pattern '^\\d{4}-\\d{2}-\\d{2}$'",
+          "type": "string_pattern_mismatch"
+        },
+        {
+          "ctx": {
+            "ge": 2
+          },
+          "input": 1,
+          "loc": [
+            "body",
+            "payload",
+            "implementation",
+            "quantiles"
+          ],
+          "msg": "Input should be greater than or equal to 2",
+          "type": "greater_than_equal"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/protocols/{protocol_id}/versions/{version}/lock": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "payload_digest"
+          ],
+          "msg": "String should match pattern '^[0-9a-f]{64}$'",
+          "type": "string_pattern_mismatch"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/factor-research/strategies/{strategy_id}/rollback": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/jobs/observability/alerts/{delivery_id}/acknowledge": {
+    "body": {
+      "detail": "未找到可确认的已投递越界告警"
+    },
+    "status": 404
+  },
+  "POST /api/jobs/{job_id}/retry": {
+    "body": {
+      "detail": "任务不存在: 1"
+    },
+    "status": 404
+  },
+  "POST /api/remote-training/tasks": {
+    "body": {
+      "detail": "实验不存在或不属于当前用户"
+    },
+    "status": 404
+  },
+  "POST /api/remote-training/tasks/{task_uuid}/cancel": {
+    "body": {
+      "detail": "远程训练任务不存在"
+    },
+    "status": 404
+  },
+  "POST /api/remote-training/tasks/{task_uuid}/complete": {
+    "body": {
+      "detail": [
+        {
+          "input": null,
+          "loc": [
+            "body",
+            "report_json"
+          ],
+          "msg": "Field required",
+          "type": "missing"
+        },
+        {
+          "input": null,
+          "loc": [
+            "body",
+            "artifact"
+          ],
+          "msg": "Field required",
+          "type": "missing"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/remote-training/tasks/{task_uuid}/fail": {
+    "body": {
+      "detail": "缺少 X-Training-Token"
+    },
+    "status": 401
+  },
+  "POST /api/remote-training/tasks/{task_uuid}/progress": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "lt": 1.0
+          },
+          "input": 1.0,
+          "loc": [
+            "body",
+            "progress"
+          ],
+          "msg": "Input should be less than 1",
+          "type": "less_than"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/remote-training/tasks/{task_uuid}/start": {
+    "body": {
+      "detail": "缺少 X-Training-Token"
+    },
+    "status": 401
+  },
+  "POST /api/research/experiments/{experiment_id}/rerun": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/strategy-correlation/portfolio-candidates": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "actual_length": 1,
+            "field_type": "List",
+            "min_length": 3
+          },
+          "input": [
+            1
+          ],
+          "loc": [
+            "body",
+            "experiment_ids"
+          ],
+          "msg": "List should have at least 3 items after validation, not 1",
+          "type": "too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/groups": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "end": "<date>",
+            "start": "<date>"
+          },
+          "loc": [
+            "body",
+            "selection_protocol"
+          ],
+          "msg": "Value error, window start must be earlier than end",
+          "type": "value_error"
+        },
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": {
+            "end": "<date>",
+            "start": "<date>"
+          },
+          "loc": [
+            "body",
+            "locked_protocol"
+          ],
+          "msg": "Value error, window start must be earlier than end",
+          "type": "value_error"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/groups/{group_id}/promotions": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "rationale"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/groups/{group_id}/reports": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/groups/{group_id}/transition": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "POST /api/research/workflows/groups/{group_id}/trials": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/hypotheses": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 20
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "falsifiable_statement"
+          ],
+          "msg": "String should have at least 20 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "risk_acceptance",
+            "rationale"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe-1",
+          "loc": [
+            "body",
+            "idempotency_key"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/research/workflows/hypotheses/{hypothesis_id}/submit": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "POST /api/research/workflows/hypotheses/{hypothesis_id}/withdraw": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "POST /api/research/workflows/promotions/{promotion_id}/transition": {
+    "body": {
+      "detail": {
+        "code": "not_found",
+        "message": "Research entity not found"
+      }
+    },
+    "status": 404
+  },
+  "POST /api/strategies/scan": {
+    "body": {
+      "data": {
+        "added": 0,
+        "after": 22,
+        "before": 22
+      }
+    },
+    "status": 200
+  },
+  "POST /api/strategies/{strategy_id}/validate": {
+    "body": {
+      "data": {
+        "message": "",
+        "valid": true
+      }
+    },
+    "status": 200
+  },
+  "POST /api/trading/deployments": {
+    "body": {
+      "detail": "策略不存在: probe"
+    },
+    "status": 404
+  },
+  "POST /api/trading/portfolios": {
+    "body": {
+      "data": {
+        "deployment_id": null,
+        "job_id": null,
+        "portfolio_id": "<id>",
+        "revision": "<id>",
+        "validation": {
+          "cash_capital": 1.0,
+          "cash_weight_bps": 10000,
+          "errors": [],
+          "strategy_weight_bps": 0,
+          "total_weight_bps": 10000,
+          "valid": true,
+          "warnings": [
+            "现金权重超过 50%，请确认是否符合预期"
+          ]
+        }
+      },
+      "detail": null
+    },
+    "status": 200
+  },
+  "POST /api/trading/portfolios/{portfolio_id}/drafts": {
+    "body": {
+      "detail": "部署不存在: [1]"
+    },
+    "status": 400
+  },
+  "POST /api/trading/portfolios/{portfolio_id}/drafts/{revision}/publish": {
+    "body": {
+      "detail": "草稿不存在"
+    },
+    "status": 404
+  },
+  "POST /api/trading/portfolios/{portfolio_id}/preview": {
+    "body": {
+      "detail": "部署不存在: [1]"
+    },
+    "status": 400
+  },
+  "POST /api/trading/portfolios/{portfolio_id}/validate": {
+    "body": {
+      "detail": "部署不存在: [1]"
+    },
+    "status": 400
+  },
+  "POST /api/trading/simulate/backfill": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "start_date"
+          ],
+          "msg": "Value error, Invalid isoformat string: 'probe'",
+          "type": "value_error"
+        },
+        {
+          "ctx": {
+            "error": {}
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "end_date"
+          ],
+          "msg": "Value error, Invalid isoformat string: 'probe'",
+          "type": "value_error"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "POST /api/trading/simulate/run": {
+    "body": {
+      "detail": {
+        "code": "pit_simulation_date_required",
+        "message": "PIT-only 模拟必须显式选择已完成交易日"
+      }
+    },
+    "status": 409
+  },
+  "PUT /api/admin/users/{target_user_id}/permissions": {
+    "body": {
+      "detail": "无效的权限: ['probe']"
+    },
+    "status": 400
+  },
+  "PUT /api/admin/users/{target_user_id}/status": {
+    "body": {
+      "detail": "用户不存在: 2"
+    },
+    "status": 404
+  },
+  "PUT /api/experiments/parameter-presets/{preset_id}": {
+    "body": {
+      "detail": "参数方案不存在: 1"
+    },
+    "status": 404
+  },
+  "PUT /api/experiments/{experiment_id}/labels": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "PUT /api/experiments/{experiment_id}/star": {
+    "body": {
+      "detail": "实验不存在: 1"
+    },
+    "status": 404
+  },
+  "PUT /api/research/workflows/hypotheses/{hypothesis_id}": {
+    "body": {
+      "detail": [
+        {
+          "ctx": {
+            "min_length": 20
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "falsifiable_statement"
+          ],
+          "msg": "String should have at least 20 characters",
+          "type": "string_too_short"
+        },
+        {
+          "ctx": {
+            "min_length": 8
+          },
+          "input": "probe",
+          "loc": [
+            "body",
+            "risk_acceptance",
+            "rationale"
+          ],
+          "msg": "String should have at least 8 characters",
+          "type": "string_too_short"
+        }
+      ]
+    },
+    "status": 422
+  },
+  "PUT /api/trading/deployments/{deployment_id}": {
+    "body": {
+      "data": {
+        "detail": "没有需要更新的字段",
+        "updated": false
+      }
+    },
+    "status": 200
+  },
+  "PUT /api/trading/deployments/{deployment_id}/retrain": {
+    "body": {
+      "detail": "部署不存在: 1"
+    },
+    "status": 404
+  },
+  "PUT /api/trading/portfolios/{portfolio_id}": {
+    "body": {
+      "data": {
+        "updated": false
+      }
+    },
+    "status": 200
+  }
+}
