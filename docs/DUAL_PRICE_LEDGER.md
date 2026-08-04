@@ -80,7 +80,9 @@ security_code + trading_date + source_provider + source_dataset
 
 普通因子变化可以在缺少权威公司行为源时入库以支持受限研究，但 readiness 明确返回
 `corporate_action_authoritative_evidence_missing` 和
-`adjustment_factor_changes_unexplained`，不得用于真实调优或执行仿真。
+`adjustment_factor_changes_unexplained`，不得用于真实调优（L3 实盘/调优保持关闭）。
+模拟盘（L2）只要求执行源达到研究级，公司行为缺失以 `data_gaps` 形式呈现而不再阻断
+假钱模拟。
 
 ## 就绪度与读取
 
@@ -113,8 +115,12 @@ readiness 的 `data_gaps` 将缺失证据映射为具体补齐动作，但不自
   双账本及无未解释调整变化全部成立。
   账本单独查询不能证明 PIT，因此这两个字段固定为 false；只有绑定实际运行输入的上层
   readiness 才可组合为 true；
-- `ready_for_execution_simulation`：raw 完整、执行源合格且公司行为证据权威；
-- `ready_for_real_tuning`：在严格无偏门禁上继续要求运行时公司行为状态机等执行能力。
+- `ready_for_execution_simulation`（模拟盘 L2 数据门槛）：raw 双源完整且执行源达到
+  研究级（`public_cross_validated` 或更高）。v0.8.4 起不再要求"持牌级"
+  （`licensed`/`exchange_authoritative`）raw 证据；只有精确 runtime binding 路径
+  可将该字段置真，普通范围查询仍固定为 false；
+- `ready_for_real_tuning`（实盘 L3）：在严格无偏门禁上继续要求运行时公司行为状态机等
+  执行能力，并需要持牌级执行源；当前保持硬锁（固定 false）。
 
 低等级 `suspended` 声明只能解释价格缺口；legacy Parquet 即使来源标识完整、收益一致、
 无跨池冲突，也只能返回 `descriptive_return_consistency=true`，所有名为 `unbiased` 的
@@ -132,11 +138,14 @@ runtime binding 的 timeline/batch/hash 完全一致时，
 `canonical_runtime_price_bound=true`。策略特征读取 `research_adjusted`；两份
 snapshot 与 binding 均进入 manifest。由于公司行为尚未进入持仓/现金状态机，普通
 实验当前不会自动把 `raw_execution` 交给引擎成交或估值；manifest 明确记录
-`bound_and_snapshotted_but_not_consumed`，执行模拟继续失败关闭。没有精确绑定时继续返回
+`bound_and_snapshotted_but_not_consumed`。v0.8.4 起：只要绑定存在且执行源达到
+研究级，模拟盘就绪（`ready_for_execution_simulation=true`），真实调优仍关闭。
+没有精确绑定时继续返回
 `legacy_cache_cross_pool_consistency_not_certified`。
 
-这仍不代表执行或实盘就绪：引擎尚未应用拆分、分红等持仓/现金公司行为，
-`corporate_action_runtime_application_missing` 继续阻断 execution 与 real tuning。
+这仍不代表实盘就绪：引擎尚未应用拆分、分红等持仓/现金公司行为，
+`corporate_action_runtime_application_missing` 继续阻断 L3 real tuning；模拟盘
+（L2）不受该实盘级门槛阻断。
 
 ## PIT 并集回填
 

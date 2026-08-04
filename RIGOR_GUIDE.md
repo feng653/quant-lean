@@ -32,7 +32,7 @@
 - 行情抓取先落 `data/staging/market-validation/`，JSON 证据（`validated-daily-staging/v1`）与 Parquet 数据成对保存，绑定 `content_sha256`、`data_sha256`、抓取请求、来源身份与有效期；
 - 合并进正式缓存时必须带 `source_provenance`（`cache-source-provenance/v1`），校验：单一 provider/endpoint/adjustment 身份一致、全部批次交叉验证标志、`frame_codes` 与 `frame_digest` 与真实帧一致；
 - `cache_only` 实验前执行 `inspect_cached_market_data`：检查日期覆盖、代码覆盖、OHLCV 字段、数据质量快照、价格账本就绪状态；任一缺口都拒绝（`CacheOnlyDataError`）；
-- `ready_for_return_research` / `ready_for_execution_simulation` / `ready_for_unbiased_tuning` 是分级的就绪标志，只有对应证据齐备才为真；
+- `ready_for_return_research` / `ready_for_execution_simulation` / `ready_for_unbiased_tuning` 是分级的就绪标志，只有对应证据齐备才为真；v0.8.4 起模拟盘（L2）`ready_for_execution_simulation` 只要求研究级执行源，实盘（L3）`ready_for_real_tuning` 保持硬锁；
 - 价格账本区分研究用复权价与执行用原始成交价，`adjusted_research_compatibility_not_raw_execution` 在 manifest 中显式声明。
 
 ### 2.3 运行层：不可变研究快照

@@ -945,7 +945,8 @@ RunManifest hash。任何快照/证据篡改或旧 active 部署缺少有效来�
 请求只接受 `data_access_policy=cache_only`、`price_purpose`、PIT 股票池
 以及训练和测试窗口。`price_purpose` 可为 `compatibility_research`（默认兼容）、
 `return_research`、`real_tuning` 或 `execution_simulation`；后三种分别执行可信
-调整价、完整双账本真实调优和 raw 执行价门禁。响应同时给出日线 OHLCV 与对应
+调整价、完整双账本真实调优和模拟盘 raw 执行价门禁（v0.8.4 起模拟盘只要求研究级
+执行源，不再强制持牌级数据）。响应同时给出日线 OHLCV 与对应
 基准指数的日期覆盖、代码/字段缺口和摘要；
 日线摘要从同一个锁内原子读取的 frame/provenance 对生成，包含日期数、字段、
 代码摘要、调整方式、来源等级与 frame digest，可安全替代分步读取
@@ -964,6 +965,10 @@ runtime batch/hash、权威日历、PIT 基准任一绑定缺失时，
 `ready_for_unbiased_return_research` 必须为 false。正式实验和扫描只接受四个 CSI
 治理池，且创建记录前执行同一门禁；`compatibility_research` 仅保留请求兼容性，
 其 `ready` 也按 PIT 正式研究口径计算。
+`ready_for_execution_simulation`（模拟盘 L2）自 v0.8.4 起在精确 runtime binding 且
+执行源达到研究级（`public_cross_validated` 或更高）时为 true，不再强制持牌级 raw；
+普通范围查询仍固定为 false（无法证明 member-session），`ready_for_real_tuning`
+（实盘 L3）保持硬锁。
 该端点不初始化外部数据源、不写缓存、不暴露文件路径，`network_accessed` 固定为
 `false`。请求体禁止额外字段。
 
@@ -1172,6 +1177,9 @@ tradability/status、公司行为验证、可信 raw/hfq 双账本且复权变�
 停牌声明、仅有 effective time 或 legacy return fallback 永远不能使其
 为真。账本单独查询不能证明 PIT 集合，所以无偏字段固定为 false；只有绑定实际运行
 输入的上层 readiness 才能组合为 true。旧单口径缓存明确为 `ledger_unavailable`。
+`ready_for_execution_simulation`（模拟盘 L2）自 v0.8.4 起在精确 runtime binding 且
+执行源达到研究级时为 true；本范围查询端点无法证明 member-session，仍固定为 false，
+`ready_for_real_tuning`（实盘 L3）保持硬锁。
 
 #### GET /api/data/price-ledger/cross-scope-audit
 
@@ -1487,7 +1495,9 @@ runtime_data_changed` 均为 false。它不会更新普通 Parquet、不会自�
 风险；不返回本地文件路径、完整来源证据或异常内部信息。缺失、旧版、来源无效和
 价格质量无效分别返回稳定错误码及 `recommended_action`。当前公共研究刷新明确
 使用 `hfq` 调整价账本；它适合收益研究但不等同 raw 成交价，因而
-`ready_for_execution_simulation=false`。完整 raw/adjusted 双账本仍是后续门禁。
+`ready_for_execution_simulation=false`。完整 raw/adjusted 双账本仍是后续门禁；
+v0.8.4 起模拟盘（L2）就绪在精确 runtime binding 且执行源达到研究级时可在
+`/data/readiness`（实验预检）路径为 true，实盘（L3）保持关闭。
 
 #### POST /cache/invalidate — 失效缓存
 

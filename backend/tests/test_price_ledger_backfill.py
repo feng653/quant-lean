@@ -417,3 +417,165 @@ def test_actual_backfill_is_blocked_when_local_pit_master_is_empty(
                 dry_run=True,
             )
         )
+
+
+def _research_grade_document(scope_id: str) -> dict:
+    """A 2-code x 3-day dual ledger with constant hfq factor (no action
+    changes to explain) and research-grade raw/hfq evidence levels."""
+    import copy
+
+    rows = []
+    for code in CODES:
+        for day in DATES:
+            rows.append(
+                {
+                    "security_code": code,
+                    "date": day,
+                    "open": 10.0,
+                    "high": 11.0,
+                    "low": 9.0,
+                    "close": 10.0,
+                    "volume": 1000.0,
+                }
+            )
+    research_rows = copy.deepcopy(rows)
+    for item in research_rows:
+        for field in ("open", "high", "low", "close"):
+            item[field] = round(item[field] * 1.05, 6)
+    source = {
+        "provider": "research-feed",
+        "dataset": "cn-equity-daily",
+        "version": "2024.01.04",
+        "adjustment": "raw",
+        "evidence_level": "public_cross_validated",
+        "retrieved_at": "2024-01-05T00:00:00Z",
+        "content_sha256": "c" * 64,
+    }
+    research_source = dict(source)
+    research_source["adjustment"] = "hfq"
+    return {
+        "schema_version": "dual-price-ledger-import/v1",
+        "scope_id": scope_id,
+        "coverage_from": DATES[0],
+        "coverage_to": DATES[-1],
+        "raw_source": source,
+        "research_source": research_source,
+        "corporate_action_source": None,
+        "raw_prices": rows,
+        "research_prices": research_rows,
+        "corporate_actions": [],
+    }
+
+
+def test_paper_simulation_readiness_becomes_true_with_bound_research_grade_ledger(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """v0.8.4 acceptance: the paper (L2) readiness check can be True with only
+    research-grade data once the exact runtime binding exists; real tuning (L3)
+    stays hard-locked."""
+    from backend.data.universe import PRESET_POOLS
+    from backend.data.price_ledger import (
+        _authorize_production_release,
+        _digest,
+    )
+
+    monkeypatch.setitem(PRESET_POOLS["csi300"], "expected_count", 2)
+    database = tmp_path / "experiment.db"
+    pit_store = PointInTimeMasterStore(database)
+    _import_membership(pit_store, "csi300")
+    store = PriceLedgerStore(database)
+    timeline = resolve_point_in_time_universe(
+        pit_store,
+        pool_id="csi300",
+        trading_dates=DATES,
+        expected_count=2,
+    )
+    document = _research_grade_document("csi300")
+    submitted = {
+        "schema_version": document["schema_version"],
+        "scope_id": document["scope_id"],
+        "coverage_from": document["coverage_from"],
+        "coverage_to": document["coverage_to"],
+        "raw_source": dict(document["raw_source"]),
+        "research_source": dict(document["research_source"]),
+        "corporate_action_source": None,
+        "raw_prices": [dict(item) for item in document["raw_prices"]],
+        "research_prices": [
+            dict(item) for item in document["research_prices"]
+        ],
+        "corporate_actions": [],
+        "revision": None,
+        "supersedes_batch_id": None,
+    }
+    imported = store.import_batch(
+        **document,
+        imported_by_user_id=7,
+        _production_release_authorization=_authorize_production_release(
+            operation="import_batch",
+            plan_sha256="a" * 64,
+            manifest_sha256="b" * 64,
+            document_sha256=_digest(submitted),
+        ),
+    )
+    store.bind_runtime_scope(
+        scope_id="csi300",
+        timeline_identity=timeline.identity(),
+        trading_dates=DATES,
+        batch_ids=[imported["batch_id"]],
+        status_source={
+            "provider": "fixture-declared-status",
+            "dataset": "fixture-status",
+            "version": "r1",
+            "adjustment": "trading_status",
+            "evidence_level": "declared",
+            "retrieved_at": "2024-01-05T00:00:00Z",
+            "content_sha256": "f" * 64,
+        },
+        suspension_observations=[],
+        bound_by_user_id=7,
+    )
+    bound = store.load_bound_runtime_prices(
+        scope_id="csi300",
+        timeline_identity=timeline.identity(),
+        trading_dates=DATES,
+    )
+    assert bound is not None
+
+    class Cache:
+        async def load_pivot_with_provenance(self, _cache_key: str):
+            return bound.research_adjusted, {
+                "providers": ["research-feed"],
+                "evidence_levels": ["public_cross_validated"],
+                "adjustments": ["hfq"],
+                "frame_digest": "dv2|fixture|sha256:" + "a" * 64,
+                "identity_consistent": True,
+                "complete_code_coverage": True,
+                "all_batches_cross_validated": True,
+                "all_batches_raw_cross_validated": True,
+                "all_batches_adjusted_factor_validated": True,
+            }
+
+    inspected = asyncio.run(
+        inspect_cached_market_data(
+            Cache(),  # type: ignore[arg-type]
+            cache_key="csi300",
+            pool_id="csi300",
+            requested_codes=CODES,
+            required_start=DATES[0],
+            required_end=DATES[-1],
+            point_in_time_store=pit_store,
+            price_ledger_store=store,
+        )
+    )
+    assert inspected.report["canonical_runtime_price_bound"] is True
+    assert (
+        inspected.report["price_ledger"]["ready_for_execution_simulation"]
+        is True
+    )
+    assert inspected.report["ready_for_execution_simulation"] is True
+    assert inspected.report["ready_for_real_tuning"] is False
+    assert (
+        inspected.report["price_ledger"]["roles"]["raw_execution"]["trusted"]
+        is True
+    )

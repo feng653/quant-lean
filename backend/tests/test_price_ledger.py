@@ -19,10 +19,16 @@ from backend.data.price_ledger import (
     PriceLedgerIntegrityError,
     PriceLedgerStore,
     PriceLedgerValidationError,
+    _authorize_production_release,
+    _digest,
     strict_unbiased_readiness,
 )
 from backend.data.price_cache_audit import audit_legacy_price_caches
 from backend.data.cache_readiness import inspect_cached_market_data
+from backend.data.point_in_time_universe import (
+    PointInTimeUniverseTimeline,
+    _timeline_hash,
+)
 from backend.db.migrate import migrate_experiment
 from backend.dependencies import get_current_user
 
@@ -46,6 +52,18 @@ def _privileged_document() -> dict[str, Any]:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 
+def _research_grade_document() -> dict[str, Any]:
+    """A dual ledger whose raw/hfq/action sources are research-grade only."""
+    document = _document()
+    for field in (
+        "raw_source",
+        "research_source",
+        "corporate_action_source",
+    ):
+        document[field]["evidence_level"] = "public_cross_validated"
+    return document
+
+
 def _declared_document() -> dict[str, Any]:
     document = _document()
     document["raw_source"]["evidence_level"] = "declared"
@@ -53,6 +71,112 @@ def _declared_document() -> dict[str, Any]:
     document["corporate_action_source"] = None
     document["corporate_actions"] = []
     return document
+
+
+def _governed_import(
+    store: PriceLedgerStore,
+    document: dict[str, Any],
+) -> dict[str, Any]:
+    """Import non-declared (research-grade) evidence with a release capability.
+
+    The store-level governance contract is intentionally unavailable over the
+    HTTP API; this helper models the exact-document capability that the
+    production materializer would issue after artifact review.
+    """
+    submitted_document = {
+        "schema_version": document["schema_version"],
+        "scope_id": document["scope_id"],
+        "coverage_from": document["coverage_from"],
+        "coverage_to": document["coverage_to"],
+        "raw_source": dict(document["raw_source"]),
+        "research_source": dict(document["research_source"]),
+        "corporate_action_source": (
+            dict(document["corporate_action_source"])
+            if document.get("corporate_action_source") is not None
+            else None
+        ),
+        "raw_prices": [dict(item) for item in document["raw_prices"]],
+        "research_prices": [
+            dict(item) for item in document["research_prices"]
+        ],
+        "corporate_actions": [
+            dict(item) for item in document["corporate_actions"]
+        ],
+        "revision": document.get("revision"),
+        "supersedes_batch_id": document.get("supersedes_batch_id"),
+    }
+    authorization = _authorize_production_release(
+        operation="import_batch",
+        plan_sha256="a" * 64,
+        manifest_sha256="b" * 64,
+        document_sha256=_digest(submitted_document),
+    )
+    return store.import_batch(
+        **document,
+        imported_by_user_id=7,
+        _production_release_authorization=authorization,
+    )
+
+
+def _bound_timeline(
+    *,
+    pool_id: str = "csi300",
+    dates: tuple[str, ...] = ("2024-01-02", "2024-01-03"),
+) -> PointInTimeUniverseTimeline:
+    """A minimal valid PIT timeline whose identity round-trips verification."""
+    members_by_date = tuple(("000001",) for _ in dates)
+    timeline = PointInTimeUniverseTimeline(
+        pool_id=pool_id,
+        dates=dates,
+        members_by_date=members_by_date,
+        union_codes=("000001",),
+        source_batches=(
+            {
+                "batch_id": "pit_" + "a" * 32,
+                "batch_digest": "a" * 64,
+                "coverage_from": dates[0],
+                "coverage_to": dates[-1],
+            },
+        ),
+        timeline_hash="temporary",
+        coverage_from=dates[0],
+        coverage_to=dates[-1],
+    )
+    from dataclasses import replace
+
+    return replace(
+        timeline,
+        timeline_hash=_timeline_hash(
+            pool_id=pool_id,
+            dates=dates,
+            members_by_date=members_by_date,
+        ),
+    )
+
+
+def _bind_runtime(
+    store: PriceLedgerStore,
+    document: dict[str, Any],
+    *,
+    timeline: PointInTimeUniverseTimeline,
+) -> dict[str, Any]:
+    return store.bind_runtime_scope(
+        scope_id=timeline.pool_id,
+        timeline_identity=timeline.identity(),
+        trading_dates=timeline.dates,
+        batch_ids=[_governed_import(store, document)["batch_id"]],
+        status_source={
+            "provider": "fixture-declared-status",
+            "dataset": "fixture-status",
+            "version": "r1",
+            "adjustment": "trading_status",
+            "evidence_level": "declared",
+            "retrieved_at": "2024-01-04T00:00:00Z",
+            "content_sha256": "f" * 64,
+        },
+        suspension_observations=[],
+        bound_by_user_id=7,
+    )
 
 
 def _import(
@@ -640,6 +764,104 @@ def test_cache_readiness_blocks_execution_until_runtime_uses_ledger(
     )
     # Point-in-time universe evidence is a separate mandatory real-tuning gate.
     assert inspected.report["ready_for_real_tuning"] is False
+
+
+def test_paper_execution_accepts_research_grade_raw_on_bound_path(
+    tmp_path: Path,
+) -> None:
+    """L2 paper trading gate: research-grade raw unlocks simulation readiness.
+
+    v0.8.4 relaxes the paper-execution data tier from licensed-only
+    (price_ledger._EXECUTION_LEVELS) to research-grade raw evidence.  Live
+    (L3) remains hard-locked: ready_for_real_tuning stays false.
+    """
+    store = PriceLedgerStore(tmp_path / "experiment.db")
+    timeline = _bound_timeline()
+    _bind_runtime(store, _research_grade_document(), timeline=timeline)
+    readiness = store.inspect_bound_runtime_readiness(
+        scope_id="csi300",
+        timeline_identity=timeline.identity(),
+        trading_dates=timeline.dates,
+    )
+    assert readiness["canonical_runtime_price_bound"] is True
+    assert readiness["roles"]["raw_execution"]["trusted"] is True
+    assert readiness["ready_for_execution_simulation"] is True
+    # L3 stays locked: no licensed execution ledger, no corporate-action
+    # position application, so real tuning remains closed.
+    assert readiness["ready_for_real_tuning"] is False
+    assert "raw_execution_source_evidence_insufficient" not in (
+        readiness["limitations"]
+    )
+
+
+def test_paper_execution_accepts_licensed_raw_on_bound_path(
+    tmp_path: Path,
+) -> None:
+    """A licensed raw source also satisfies the paper gate (superset tier)."""
+    store = PriceLedgerStore(tmp_path / "experiment.db")
+    timeline = _bound_timeline()
+    _bind_runtime(store, _privileged_document(), timeline=timeline)
+    readiness = store.inspect_bound_runtime_readiness(
+        scope_id="csi300",
+        timeline_identity=timeline.identity(),
+        trading_dates=timeline.dates,
+    )
+    assert readiness["ready_for_execution_simulation"] is True
+    assert readiness["ready_for_real_tuning"] is False
+
+
+def test_declared_raw_still_blocks_paper_execution_on_bound_path(
+    tmp_path: Path,
+) -> None:
+    """declared test data never unlocks the paper gate."""
+    store = PriceLedgerStore(tmp_path / "experiment.db")
+    timeline = _bound_timeline()
+    _bind_runtime(store, _document(), timeline=timeline)
+    readiness = store.inspect_bound_runtime_readiness(
+        scope_id="csi300",
+        timeline_identity=timeline.identity(),
+        trading_dates=timeline.dates,
+    )
+    assert readiness["ready_for_execution_simulation"] is False
+    assert readiness["ready_for_real_tuning"] is False
+    assert "raw_execution_source_evidence_insufficient" in (
+        readiness["limitations"]
+    )
+
+
+def test_range_readiness_reports_research_grade_raw_without_certifying_execution(
+    tmp_path: Path,
+) -> None:
+    """A non-bound range query exposes paper-grade raw trust but never certifies
+    execution; only the exact runtime-binding path can do that."""
+    store = PriceLedgerStore(tmp_path / "experiment.db")
+    _governed_import(store, _research_grade_document())
+    readiness = store.inspect_readiness(
+        scope_id="csi300",
+        start="2024-01-02",
+        end="2024-01-03",
+        security_codes=["000001"],
+    )
+    assert readiness["dual_ledger_complete"] is True
+    assert readiness["roles"]["raw_execution"]["trusted"] is True
+    assert readiness["ready_for_execution_simulation"] is False
+    assert "generic_readiness_not_execution_certification" in (
+        readiness["limitations"]
+    )
+
+
+def test_strict_unbiased_keeps_licensed_execution_ledger_requirement() -> None:
+    """Research-grade raw relaxes paper, not the strict unbiased research gate."""
+    assert strict_unbiased_readiness(
+        exact_pit_binding=True,
+        member_session_complete=True,
+        bitemporal_availability_verified=True,
+        trading_status_authoritative=True,
+        corporate_action_validated=True,
+        trusted_research_ledger=True,
+        trusted_execution_ledger=False,
+        adjustment_changes_explained=True,
+    ) is False
 
 
 def test_migration_is_idempotent(
