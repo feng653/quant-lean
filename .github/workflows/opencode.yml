@@ -9,11 +9,14 @@ on:
 
 jobs:
   opencode:
+    # 安全门控：公开仓库 + 本地 runner，只允许仓库拥有者 feng653 触发。
+    # 本地 runner 有完整本机访问权（31G 数据/工具链），任何第三方触发即远程代码执行。
     if: >-
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'agent')) ||
-      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))) ||
-      github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+      github.actor == 'feng653' && (
+        (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'agent')) ||
+        (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))) ||
+        github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, macos, arm64]
     timeout-minutes: 300
     permissions:
       id-token: write

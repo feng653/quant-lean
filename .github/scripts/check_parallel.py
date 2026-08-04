@@ -24,7 +24,8 @@ import urllib.request
 
 REPO = os.environ.get("GITHUB_REPOSITORY", "feng653/quant-lean")
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
-NEW_ISSUE = int(os.environ.get("NEW_ISSUE_NUMBER", "0"))
+_raw_issue = os.environ.get("NEW_ISSUE_NUMBER", "").strip()
+NEW_ISSUE = int(_raw_issue) if _raw_issue.isdigit() else 0
 
 
 def gh_api(path: str) -> dict | list:
