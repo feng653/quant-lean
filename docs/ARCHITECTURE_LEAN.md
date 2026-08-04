@@ -63,3 +63,95 @@ frontend/                   ≈1.5 万行（现在 2.9 万）：只留实际使�
 | 最大文件 | 4,150 行 | <400 行 |
 | 契约锁定 | 无 | 全部端点 golden 快照，CI 强制 |
 | 死代码 | ~340 行确认 | 0 |
+
+---
+
+## 架构图（Mermaid）
+
+### 1. 系统分层架构
+
+```mermaid
+flowchart TB
+    subgraph 前端["frontend/ React 19 + TS"]
+        P1[页面 ~100 端点对应]
+        P2[services 客户端]
+        P3[Zustand store]
+    end
+
+    subgraph 后端["backend/ FastAPI"]
+        API["api/ 薄接口层<br/>~60 端点 目标"]
+        CORE["core/ 工具层<br/>hashing · timeutils · errors"]
+        STRAT["strategies/ 策略层<br/>base + ~10 策略"]
+        ENG["engine/ 引擎层<br/>backtest · paper 共用"]
+        JOBS["jobs/ 后台任务<br/>broker · handlers · scheduler"]
+        DATA["data/ 数据层<br/>Tushare主+BaoStock备 → 一套存储<br/>available_at 防前视"]
+        MAIN["main.py &lt;300 行 纯装配"]
+    end
+
+    subgraph 存储["data/ 运行时"]
+        DB1[(users.db)]
+        DB2[(experiment.db)]
+        DB3[(trading_sim.db)]
+        PARQ[(Parquet 行情缓存)]
+    end
+
+    P1 --> P2 --> API
+    API --> MAIN
+    MAIN --> ENG
+    ENG --> STRAT
+    ENG --> DATA
+    ENG --> JOBS
+    API --> CORE
+    ENG --> CORE
+    DATA --> CORE
+    DATA --> PARQ
+    JOBS --> DB1 & DB2 & DB3
+```
+
+### 2. 全自动工作流（GitHub 原生流水线）
+
+```mermaid
+sequenceDiagram
+    participant U as 用户（feng653）
+    participant G as GitHub
+    participant GUARD as 并行守卫
+    participant R as 本地 Runner（Mac）
+    participant AGENT as opencode agent
+    participant CI as CI 门禁
+    participant M as master
+
+    U->>G: 开 issue + 打 agent 标签
+    G->>GUARD: 触发 opencode.yml
+    GUARD->>GUARD: domain 互斥 + p:serial 屏障检查
+    alt 冲突
+        GUARD->>G: 留言原因 + 移除 agent 标签（排队）
+    else 放行
+        GUARD->>R: 分配本地 runner
+        R->>AGENT: 启动 req-executor
+        AGENT->>AGENT: 读宪法文档 + 实现 + 测试
+        AGENT->>G: push 分支 + 开 PR（失败则留言分支名）
+        G->>CI: 触发 ci.yml（lint/单测/集成/契约快照 diff/前端 build）
+        CI-->>M: 全绿 → 合并
+        U->>M: 验收 → 打 tag v0.x.y
+    end
+```
+
+### 3. 并行安全机制（domain 互斥）
+
+```mermaid
+flowchart LR
+    subgraph 任务A["T-A（进行中）"]
+        LA[domain:data]
+    end
+    subgraph 任务B["T-B（提交）"]
+        LB[domain:data]
+    end
+    subgraph 任务C["T-C（提交）"]
+        LC[domain:api]
+    end
+
+    LB -->|重叠 → 拒绝排队| G{守卫}
+    LC -->|无交集 → 放行| G
+    G -->|串行合并| MQ[Merge Queue / 按序合并]
+    MQ --> MASTER[master 常绿]
+```
