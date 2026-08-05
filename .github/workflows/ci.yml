@@ -1,10 +1,29 @@
 name: CI Pipeline
 
+# CI 豁免矩阵（纯文档/静态资源/配置类改动不触发 CI）：
+# - docs/**、*.md、docs/assets/**（图片）→ 完全豁免
+# - deploy/macos/*.plist、frontend/README.md → 完全豁免（部署配置/前端文档）
+# - data/tuning/*.json → 完全豁免（调参记录，非代码）
+# - .opencode/agents/*.md → 完全豁免（agent 提示词）
+# - .github/workflows/*  → 强制 full（工作流改坏会绕过门禁，不可豁免）
+# - backend/tests/snapshots/ → full + 人工（行为变化红线）
 on:
   push:
     branches: [master, dev, 'feature/**', 'feat/**', 'fix/**', 'refactor/**']
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'deploy/macos/*.plist'
+      - 'data/tuning/*.json'
+      - '.opencode/agents/*.md'
   pull_request:
     branches: [master, dev, 'test/**']
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'deploy/macos/*.plist'
+      - 'data/tuning/*.json'
+      - '.opencode/agents/*.md'
   merge_group:
 
 jobs:
@@ -15,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       full: ${{ steps.tier.outputs.full }}
+      skip: ${{ steps.tier.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +45,7 @@ jobs:
           base="${{ github.base_ref }}"
           ref="${{ github.ref }}"
           full="false"
+          skip="false"
           # 汇聚层/发布层：全量
           if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
             full="true"
@@ -36,6 +57,12 @@ jobs:
               echo "检测到工作流配置改动，强制 full tier"
               full="true"
             fi
+            # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
+            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+            if [[ -z "$non_ignored" ]]; then
+              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+              skip="true"
+            fi
           else
             # push 事件：改动含 .github/workflows 也强制全量
             changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
@@ -43,8 +70,14 @@ jobs:
               echo "检测到工作流配置改动，强制 full tier"
               full="true"
             fi
+            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+            if [[ -z "$non_ignored" ]]; then
+              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+              skip="true"
+            fi
           fi
           echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
 
   release_source_check:
     name: Release source check
@@ -69,6 +102,8 @@ jobs:
 
   fast_checks:
     name: Fast checks (ruff + smoke)
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +122,7 @@ jobs:
 
   backend:
     name: Backend (${{ matrix.os }})
-    if: needs.tier.outputs.full == 'true'
+    if: needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
     needs: [tier]
     runs-on: ${{ matrix.os }}
     strategy:
@@ -130,7 +165,7 @@ jobs:
 
   health_check:
     name: L2 health check (synthetic E2E)
-    if: needs.tier.outputs.full == 'true'
+    if: needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
     needs: [tier]
     runs-on: ubuntu-latest
     steps:
@@ -145,6 +180,8 @@ jobs:
 
   frontend:
     name: Frontend
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -166,6 +203,8 @@ jobs:
 
   snapshot_baseline_diff:
     name: Snapshot baseline diff
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -205,7 +244,13 @@ jobs:
       - name: Verify required jobs
         shell: bash
         run: |
+          SKIP="${{ needs.tier.outputs.skip }}"
           FULL="${{ needs.tier.outputs.full }}"
+          # 纯文档/豁免路径改动：CI 主体跳过，直接通过
+          if [[ "$SKIP" == "true" ]]; then
+            echo "纯文档/配置改动，CI 豁免（skip=true），通过。"
+            exit 0
+          fi
           # fast 层：release_source_check + fast_checks + frontend + snapshot_baseline_diff 必绿
           if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.fast_checks.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
             echo "One or more fast-tier required jobs failed."
@@ -226,7 +271,7 @@ jobs:
     name: Contract snapshot diff
     runs-on: ubuntu-latest
     needs: [tier, backend]
-    if: always() && needs.tier.outputs.full == 'true'
+    if: always() && needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
     steps:
       - uses: actions/checkout@v6
         with:

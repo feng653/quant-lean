@@ -69,8 +69,9 @@ jobs:
               gh pr comment "$pr" --body "⏸ 自动合并跳过：改动涉及端点/数据结构但未带 \`behavior-change\` 标签。若属行为变化请补标签（需用户 Approve）；若确属无行为变化请说明。" 2>/dev/null || true
               continue
             fi
-            # 3) CI 状态：分层判定
-            #    dev 层 PR：只需 Fast checks + Frontend + Snapshot baseline 绿（全量在批 PR 跑）
+            # 3) CI 状态：分层判定 + 豁免识别
+            #    纯文档 PR（skip=true）：Required checks 会通过（summary 直接放行），可直接合并
+            #    dev 层 PR：只需 Fast checks + Frontend + Snapshot baseline 绿
             #    test/integration 目标 PR：所有 check 必须 SUCCESS 且无 pending
             state="$(gh pr view "$pr" --json statusCheckRollup -q '
               .statusCheckRollup as $c |
@@ -82,6 +83,20 @@ jobs:
                 else "red" end
               end' 2>/dev/null || echo unknown)"
             echo "  CI 状态: $state"
+            # 3.5) 豁免识别：改动全为豁免路径（docs/md/plist/tuning/agent md）→ Required checks 会绿，直接视为通过
+            changed_files="$(gh pr diff "$pr" --name-only 2>/dev/null || true)"
+            non_ignored="$(echo "$changed_files" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+            if [[ -z "$non_ignored" && -n "$changed_files" ]]; then
+              echo "  ✅ 纯文档/配置改动（豁免路径），CI 豁免，直接合并"
+              mergeable="$(gh pr view "$pr" --json mergeable -q .mergeable 2>/dev/null || echo UNKNOWN)"
+              if [[ "$mergeable" != "CONFLICTING" ]]; then
+                gh pr merge "$pr" --merge --auto 2>/dev/null || gh pr merge "$pr" --merge 2>/dev/null \
+                  || echo "  ⚠️ 合并失败（可能是 ruleset 条件未满足）"
+              else
+                echo "  ⏸ 有冲突，跳过"
+              fi
+              continue
+            fi
             if [[ "$base" == "test/integration" ]]; then
               # 汇聚层：必须全绿（含 Backend 全量 + L2 + 快照）
               if [[ "$state" != "green" ]]; then
