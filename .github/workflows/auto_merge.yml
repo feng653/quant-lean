@@ -1,0 +1,68 @@
+name: Auto merge to test/integration
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled, ready_for_review]
+    branches: [test/integration]
+  workflow_run:
+    workflows: ['CI Pipeline']
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto merge (CI green, no snapshot)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect mergeable PRs targeting test/integration
+        id: prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "PR 事件，只检查当前 PR #${{ github.event.pull_request.number }}"
+            echo "pr_numbers=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "CI 完成事件，扫描所有 open PR → test/integration"
+            open_prs="$(gh pr list --base test/integration --state open --json number -q '.[].number' | tr '\n' ' ')"
+            echo "pr_numbers=$open_prs" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Auto-merge qualifying PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for pr in ${{ steps.prs.outputs.pr_numbers }}; do
+            echo "=== 检查 PR #$pr ==="
+            # 1) 快照目录改动 → 必须人工 Approve（行为变化红线），自动合并跳过
+            snapshot_files="$(gh pr diff "$pr" --name-only 2>/dev/null | grep -c '^backend/tests/snapshots/' || true)"
+            if [[ "$snapshot_files" != "0" ]]; then
+              echo "  ⏸ 涉及契约快照（行为变化），需人工 Approve，跳过自动合并"
+              gh pr comment "$pr" --body "⏸ 自动合并跳过：涉及契约快照目录，按宪法需用户（行为变化最终确认人）Approve。" 2>/dev/null || true
+              continue
+            fi
+            # 2) CI 状态
+            state="$(gh pr view "$pr" --json statusCheckRollup -q '[.statusCheckRollup[] | select(.conclusion != null) | .conclusion] | if length == 0 then "none" else (if all(. == "SUCCESS") then "green" else "red" end) end' 2>/dev/null || echo unknown)"
+            echo "  CI 状态: $state"
+            if [[ "$state" != "green" ]]; then
+              echo "  ⏸ CI 未全绿，跳过"
+              continue
+            fi
+            # 3) 无 conflict + 可合并
+            mergeable="$(gh pr view "$pr" --json mergeable -q .mergeable 2>/dev/null || echo UNKNOWN)"
+            if [[ "$mergeable" == "CONFLICTING" ]]; then
+              echo "  ⏸ 有冲突，跳过（agent 需 rebase）"
+              continue
+            fi
+            # 4) 自动合并
+            echo "  ✅ 自动合并 PR #$pr"
+            gh pr merge "$pr" --merge --auto 2>/dev/null || gh pr merge "$pr" --merge 2>/dev/null \
+              || echo "  ⚠️ 合并失败（可能是 ruleset 条件未满足）"
+          done
