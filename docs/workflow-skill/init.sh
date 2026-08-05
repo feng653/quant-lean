@@ -87,7 +87,7 @@ echo "✔ ci.yml / e2e_release.yml / check_parallel.py"
 
 if [[ "$GITHUB_AGENT" == 1 ]]; then
   render "$TPL/opencode.yml" > .github/workflows/opencode.yml
-  echo "✔ opencode.yml（GitHub Actions 自动 agent，actor=$ACTOR）"
+  echo "OK opencode.yml (GitHub Actions auto agent, actor=$ACTOR)"
 fi
 
 # ---------- 4. GitHub 标签 ----------
