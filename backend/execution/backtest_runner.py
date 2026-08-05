@@ -668,7 +668,7 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
                 logging.getLogger("quant_platform").warning(
                     "PIT runtime input unavailable for experiment %s; "
                     "degraded to cached-data research run",
-                    exp["experiment_id"],
+                    exp["id"],
                 )
 
         cache = DataCache()
