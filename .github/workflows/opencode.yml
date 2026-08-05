@@ -39,6 +39,14 @@ jobs:
         run: |
           python .github/scripts/check_parallel.py
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-
+
       - name: Configure git credentials for agent pushes
         shell: bash
         env:

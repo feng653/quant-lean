@@ -291,9 +291,22 @@ class ResearchDataStore:
 
     @staticmethod
     def _matching_tushare_report(
-        evidence_root: Path, source_manifests: set[str]
+        evidence_root: Path,
+        source_manifests: set[str],
+        *,
+        expected_complete_snapshot_count: int | None = None,
+        expected_run_id: str | None = None,
+        expected_checkpoint_sha256: str | None = None,
     ) -> str | None:
-        """Find an intact report that binds the imported monthly receipts."""
+        """Find an intact report that binds the imported monthly receipts.
+
+        A report matches when every complete monthly index snapshot it
+        references is present in the generation manifests (subset) and the
+        complete-snapshot count is consistent with the expected coverage.
+        A reconciled generation retains far more manifests than a report
+        (market sessions, metadata), so exact-set equality can never hold;
+        subset + count replaces it.
+        """
 
         report_root = evidence_root / "reports" / "sha256"
         if not report_root.is_dir():
@@ -308,6 +321,17 @@ class ResearchDataStore:
                 if hashlib.sha256(raw).hexdigest() != digest:
                     continue
                 report = json.loads(raw)
+                if (
+                    expected_run_id is not None
+                    and report.get("run_id") != expected_run_id
+                ):
+                    continue
+                if (
+                    expected_checkpoint_sha256 is not None
+                    and (report.get("checkpoint") or {}).get("sha256")
+                    != expected_checkpoint_sha256
+                ):
+                    continue
                 coverage = report.get("index_month_coverage")
                 if not isinstance(coverage, list):
                     continue
@@ -318,7 +342,12 @@ class ResearchDataStore:
                     and item.get("status")
                     == "complete_monthly_snapshot_candidate"
                 }
-                if report_manifests == source_manifests:
+                if not report_manifests:
+                    continue
+                if report_manifests <= source_manifests and (
+                    expected_complete_snapshot_count is None
+                    or len(report_manifests) == expected_complete_snapshot_count
+                ):
                     candidates.append(
                         (str(report.get("observed_at") or ""), digest)
                     )
@@ -456,7 +485,9 @@ class ResearchDataStore:
             "research_only_not_live_eligible",
         }
         candidate_report_sha256 = self._matching_tushare_report(
-            evidence, source_manifests
+            evidence,
+            source_manifests,
+            expected_complete_snapshot_count=len(source_manifests),
         )
         identity = {
             "schema_version": RESEARCH_GENERATION_SCHEMA,
@@ -969,6 +1000,14 @@ class ResearchDataStore:
             "strict_reconciliation_warning_count": strict_reconciliation_warning_count,
         }
         report_sha = str(candidate_report_sha256 or "") or None
+        if report_sha is None:
+            report_sha = self._matching_tushare_report(
+                evidence,
+                source_manifests,
+                expected_complete_snapshot_count=expected_index_months,
+                expected_run_id=run_id,
+                expected_checkpoint_sha256=checkpoint["checkpoint_sha256"],
+            )
         if report_sha is not None and not _SHA256.fullmatch(report_sha):
             raise ResearchDataStoreError("Tushare candidate report digest is invalid")
         if report_sha is not None:
@@ -2382,8 +2421,9 @@ class ResearchDataStore:
                 "ready": True,
                 "schema_version": RESEARCH_MARKET_CACHE_SCHEMA,
                 "generation_id": pointer["generation_id"],
-                "candidate_report_sha256": pointer.get(
-                    "candidate_report_sha256"
+                "candidate_report_sha256": (
+                    pointer.get("candidate_report_sha256")
+                    or metadata.get("candidate_report_sha256")
                 ),
                 "date_start": observed_start,
                 "date_end": observed_end,
