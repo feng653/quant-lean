@@ -68,7 +68,7 @@ cd frontend && npm run lint && npm run test && npm run build
 - **并行判定标签**：提 issue 时声明 `domain:*`（碰触的领域）与 `p:serial`（全局改动）。
   `opencode.yml` 开工前自动执行 `.github/scripts/check_parallel.py`：与进行中任务 domain 重叠或被
   p:serial 屏障挡住 → 自动留言原因并移除 agent 标签（排队）；无冲突 → 放行并行。
-- 版本顺序：v0.3.0 契约锁定 → v0.4.0 抽层 → v0.5.0 去重 → v0.6.0 删除 → v0.7.0 数据收敛 → v0.8.0 行为简化（见 `docs/VERSIONING.md`）。
+- 版本顺序：v0.6.0 清理补完 → v0.7.0 数据收敛 → v0.8.0 行为简化 → v0.9.0 代码简化（见 `docs/VERSIONING.md`）。
 
 ### 全自动流水线（GitHub 原生）
 
@@ -79,12 +79,27 @@ cd frontend && npm run lint && npm run test && npm run build
   - 行为变化（改端点/响应/数据结构）：必须显式更新快照，并在 PR 描述列出变更清单，等用户 Approve。
   - 禁止静默更新快照来掩盖行为变化。
 
+### PR 描述要求（小白友好，强制）
+
+**每个 PR 必须足够详细、对小白友好**——假设读者是"没参与本次开发、不了解内部结构的人"。PR 描述固定包含：
+
+1. **一句话总结**：这个 PR 干了什么（1-2 句大白话，不含术语堆砌）。
+2. **为什么做**：对应 issue（T-xx）+ 问题背景（3-5 行）。
+3. **改了什么**：按目录/文件列出改动，每个改动用一句白话解释作用；新文件说明职责。
+4. **行为变化清单（如适用）**：改了哪些端点/响应/数据结构；若改了快照，逐条列出并说明为什么。
+5. **验证结果**：本地跑过的验证命令与结果（ruff / pytest / tsc / lint / build / 契约快照），全部贴真实输出摘要。
+6. **如何人工验证**（可选）：给用户一个可执行的验证步骤（如"启动后端 → 调 X 接口 → 应看到 Y"）。
+
+> 规则：PR 描述任何一项缺失或含糊 → reviewer/协调者要求补齐后才可合并。
+
 ### 并行与合并
 
-- 每个 agent 在独立分支工作；**版本 PR 默认合入 `test/integration`（测试分支）**。
-- **发布门禁**：master 只接受来自 `test/integration` 的发布 PR（CI 强制检查，
-  见 ci.yml release_source_check）；测试分支必须通过真实数据 E2E
-  （注册→实验→模拟盘→前端全链路）后才允许发布到 master。
+- 每个 agent 在独立分支工作；**版本 PR 默认合入 `test/integration`（测试分支）**；**合并即删分支**（`opencode/T-xx-*`、`hotfix/*` 用完即删）。
+- **发布门禁（三层，全机器强制）**：
+  - L1 契约快照：181 端点响应结构零漂移（CI 自动）。
+  - L2 自动体检机：合成数据全链路（注册→实验→回测→模拟盘初始化，`tests/integration/test_e2e_availability.py`，CI 自动）。
+  - L3 真实数据自动验收：本地 runner 跑 31G 真实数据（`e2e_release.yml`，job 名 `e2e-release-verification`）；**报告由机器检查，无需人看**；该 check 是 master 发布的 required check（ruleset 强制）。
+- **发布 DoD**：L1+L2 全绿 + L3 E2E check 绿 + 来源合法（master 只收来自 test/integration 的发布 PR，ci.yml release_source_check）+ 你确认合并，才可打 tag。
 - 冲突时：后到者 rebase 最新测试分支，读两边代码解决，重跑 CI。
 - 语义冲突由契约快照 diff 暴露；用户是行为变化的最终确认人。
 

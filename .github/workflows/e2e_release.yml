@@ -1,0 +1,37 @@
+name: E2E Release Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-release-verification:
+    name: e2e-release-verification
+    # 真实数据（31G）只存在于本地 runner；任何第三方触发即远程代码执行。
+    # 与 opencode.yml 同策略：只允许仓库拥有者 feng653 触发。
+    if: github.actor == 'feng653'
+    runs-on: [self-hosted, macos, arm64]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run real-data E2E release verification
+        shell: bash
+        run: |
+          bash scripts/e2e_release.sh --report "$GITHUB_WORKSPACE/e2e-release-report.json"
+
+      - name: Upload E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-release-report
+          path: e2e-release-report.json
+          retention-days: 14
