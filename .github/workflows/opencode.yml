@@ -48,6 +48,35 @@ jobs:
           git config --global user.email "opencode-bot@users.noreply.github.com"
           git config --global credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
 
+      # 硬控制（机器驱动，不依赖 AI 自行 push）：后台循环定时把 agent 所在分支
+      # 的工作区改动 commit + push 到云端，让协调者/用户随时可从 GitHub 分支
+      # 的提交时间戳判断 agent 是否活跃、进展如何（解决"agent 活跃性外界不可知"）。
+      # - 有改动才提交（分析/思考阶段不产生空提交）
+      # - commit 消息带 [skip ci]，避免心跳推送触发 CI
+      # - agent 步骤结束后由 Stop 步骤（if: always()）杀掉循环
+      - name: Start periodic branch upload (hard guard)
+        shell: bash
+        run: |
+          nohup bash -c '
+            while true; do
+              BRANCH="$(git branch --show-current 2>/dev/null || echo master)"
+              if ! git diff --quiet || ! git diff --cached --quiet; then
+                git add -A
+                git commit -m "heartbeat: auto-upload work in progress [skip ci]" >/dev/null 2>&1 || true
+                git push -u origin "HEAD:$BRANCH" >/dev/null 2>&1 || true
+              fi
+              sleep 120
+            done
+          ' > /tmp/heartbeat-pusher.log 2>&1 &
+          echo $! > /tmp/heartbeat-pusher.pid
+          sleep 1
+          if kill -0 "$(cat /tmp/heartbeat-pusher.pid)" 2>/dev/null; then
+            echo "heartbeat pusher started (pid $(cat /tmp/heartbeat-pusher.pid))"
+          else
+            echo "❌ heartbeat pusher failed to start: $(cat /tmp/heartbeat-pusher.log)"
+            exit 1
+          fi
+
       - name: Run OpenCode agent
         uses: anomalyco/opencode/github@latest
         env:
@@ -85,3 +114,15 @@ jobs:
             5. 若开 PR 被 GitHub 拒绝（403 not permitted）：把代码 commit + push 到分支，
                在 issue 评论写明"分支名: <branch>"，结束。
             行为不变的任务不得改动 backend/tests/snapshots/ 任何文件。
+
+      - name: Stop periodic branch upload
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/heartbeat-pusher.pid ]; then
+            kill "$(cat /tmp/heartbeat-pusher.pid)" 2>/dev/null || true
+            rm -f /tmp/heartbeat-pusher.pid
+            echo "heartbeat pusher stopped"
+          else
+            echo "no heartbeat pusher to stop"
+          fi

@@ -242,8 +242,14 @@ jobs:
             echo "非 PR 事件（push），跳过基线比对。"
             exit 0
           fi
-          git fetch origin "$BASE_REF" --depth=1
-          diff_files=$(git diff --name-only "origin/$BASE_REF...HEAD" -- backend/tests/snapshots/)
+          git fetch origin "$BASE_REF"
+          base_sha=$(git rev-parse "origin/$BASE_REF")
+          merge_base=$(git merge-base "$base_sha" HEAD || true)
+          if [[ -z "$merge_base" ]]; then
+            echo "⚠️ 与基线分支无共同祖先（历史异常），跳过比对。"
+            exit 0
+          fi
+          diff_files=$(git diff --name-only "$merge_base"...HEAD -- backend/tests/snapshots/)
           if [[ -z "$diff_files" ]]; then
             echo "✅ 快照与基线零改动。"
             exit 0
