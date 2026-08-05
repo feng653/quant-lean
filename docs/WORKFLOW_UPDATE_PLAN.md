@@ -274,7 +274,9 @@ sequenceDiagram
 | 0.1 | 删除本地 15 个残留分支 | `git branch -D` 逐个删（chore/docs/feat×5/fix×7/debug 全列表见 git branch） | 只剩 master/test/integration |
 | 0.2 | 删除远程 debug/min-workflow | `git push origin --delete debug/min-workflow` | 远程分支干净 |
 | 0.3 | 关闭 PR #32（不合并 master） | v0.8.4 内容已在 test/integration；留言归属 v0.8.0 | PR closed |
-| 0.4 | issue 重命名（11 个） | `[v0.x.y] xxx` → `T-xx xxx（v0.x.y 候选）`；新增 T-32/T-33/T-34 三个 issue | 列表无版本号标题 |
+| 0.4 | **GitHub issue 清理（重命名）** | 11 个 OPEN issue 标题 `[v0.x.y] xxx` → `T-xx xxx（v0.y.z 候选）`：<br/>#19→T-19 端点删除（v0.6.0 候选）｜#20→T-20 数据设计（v0.7.0 候选）｜#21→T-21 对账（v0.7.0 候选）｜#22→T-22 复权（v0.7.0 候选）｜#23→T-23 双账本（v0.7.0 候选）｜#24→T-24 QA（v0.8.0 候选）｜#25→T-25 权限（v0.8.0 候选）｜#26→T-26 异常（v0.8.0 候选）｜#27→T-27 模拟盘放宽（v0.8.0 候选）｜#28→T-28 字段（v0.8.0 候选）｜#31→T-31 canonical（v0.6.0 候选） | `gh issue list` 无版本号标题 |
+| 0.5 | **新建任务 issue** | T-32 巨文件拆分（v0.9.0 候选，19 个 >1000 行文件分批拆到 <400）｜T-33 前端瘦身（v0.9.0 候选，29,304→~15,000）｜T-34 未用服务退役（v0.6.0 候选，research_workflow 等取证后删）——均带 domain 标签 + 验收标准 | 3 个 issue 存在 |
+| 0.6 | **issue 状态与标签整理** | ① #27 实现已完成（在测试分支）→ 移除 `agent` 标签，避免守卫误判进行中；② 全部 OPEN issue 核对 domain/behavior-change/p:serial 标签与新发布目标一致；③ 已关闭的 #1-#6 补迁移说明 comment（指向新任务号） | 标签与队列一致，无残留 agent 标签 |
 
 ### 阶段 1：版本体系改造（2 小时）
 
