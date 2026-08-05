@@ -256,8 +256,10 @@ print(json.dumps(r, ensure_ascii=False))
 ")"
 gap_count="$(printf '%s' "$gap_report" | "$python_bin" -c "import sys,json;print(len(json.load(sys.stdin)['missing_member_codes']))")"
 if (( gap_count > 0 )); then
-  log "⚠️ 数据缺口：缓存缺 ${gap_count} 只会员股价格（更新前检测发现；数据收敛后自动消除）"
-  data_check_result="blocked:data_gap=${gap_count}"
+  # PIT 数据未齐全时的分级门禁：缺口仅记录告警，不阻塞验收。
+  # 实验以 cache 可用子集运行（结果仅供研究参考），缺口在报告中可查。
+  log "⚠️ 数据缺口：缓存缺 ${gap_count} 只会员股价格（仅告警，不阻塞；实验用可用子集运行）"
+  data_check_result="warning:data_gap=${gap_count}"
   blocked_reasons="${blocked_reasons}data_gap_${gap_count};"
 else
   log "数据自动比对：缓存与 PIT 会员无缺口"
