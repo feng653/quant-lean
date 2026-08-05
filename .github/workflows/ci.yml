@@ -2,12 +2,31 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [master, 'feature/**', 'feat/**', 'fix/**', 'refactor/**']
+    branches: [master, dev, 'feature/**', 'feat/**', 'fix/**', 'refactor/**']
   pull_request:
-    branches: [master, 'test/**']
+    branches: [master, dev, 'test/**']
   merge_group:
 
 jobs:
+  # ── 分层判定：全量测试只跑在汇聚层（test/integration / master），
+  #    dev 层与普通分支只跑快速检查（fast_checks）。
+  tier:
+    name: Tier (full vs fast)
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.tier.outputs.full }}
+    steps:
+      - id: tier
+        shell: bash
+        run: |
+          base="${{ github.base_ref }}"
+          ref="${{ github.ref }}"
+          if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "full=false" >> "$GITHUB_OUTPUT"
+          fi
+
   release_source_check:
     name: Release source check
     runs-on: ubuntu-latest
@@ -29,8 +48,28 @@ jobs:
           fi
           echo "✅ head 为 test/integration，允许发布。"
 
+  fast_checks:
+    name: Fast checks (ruff + smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - run: ruff check backend/ tests/integration/ conftest.py
+      - name: Python import smoke (backend boots)
+        run: |
+          python -c "from backend.main import app; print('app imports OK')"
+      - name: Fast unit subset (core + jobs broker)
+        run: python -m pytest backend/tests/test_core.py backend/tests/test_core_hashing.py backend/tests/test_core_timeutils.py backend/tests/test_jwt_security.py -q --tb=short --timeout=120
+
   backend:
     name: Backend (${{ matrix.os }})
+    if: needs.tier.outputs.full == 'true'
+    needs: [tier]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -72,6 +111,8 @@ jobs:
 
   health_check:
     name: L2 health check (synthetic E2E)
+    if: needs.tier.outputs.full == 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -139,23 +180,34 @@ jobs:
   summary:
     name: Required checks
     runs-on: ubuntu-latest
-    needs: [release_source_check, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff]
+    needs: [release_source_check, fast_checks, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff, tier]
     if: always()
     steps:
       - name: Verify required jobs
         shell: bash
         run: |
-          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.backend.result }}" != "success" || "${{ needs.health_check.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.contract_snapshot.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
-            echo "One or more required jobs failed."
+          FULL="${{ needs.tier.outputs.full }}"
+          # fast 层：release_source_check + fast_checks + frontend + snapshot_baseline_diff 必绿
+          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.fast_checks.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
+            echo "One or more fast-tier required jobs failed."
             exit 1
+          fi
+          # full 层：backend + health_check + contract_snapshot 也必须绿
+          if [[ "$FULL" == "true" ]]; then
+            if [[ "${{ needs.backend.result }}" != "success" || "${{ needs.health_check.result }}" != "success" || "${{ needs.contract_snapshot.result }}" != "success" ]]; then
+              echo "One or more full-tier required jobs failed."
+              exit 1
+            fi
+          else
+            echo "fast 层通过（全量测试在汇聚层 test/integration 执行）"
           fi
           echo "All required checks passed."
 
   contract_snapshot:
     name: Contract snapshot diff
     runs-on: ubuntu-latest
-    needs: [backend]
-    if: always()
+    needs: [tier, backend]
+    if: always() && needs.tier.outputs.full == 'true'
     steps:
       - uses: actions/checkout@v6
         with:
