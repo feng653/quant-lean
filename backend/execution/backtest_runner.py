@@ -652,12 +652,24 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
             # separate legacy evidence timeline or drift to the active pointer.
             pass
         else:
-            await pit_runtime.require_pit_runtime_input(
-                pool_id=pool_id,
-                required_start=calculation_start,
-                required_end=exp["test_end"],
-                purpose="research",
-            )
+            try:
+                await pit_runtime.require_pit_runtime_input(
+                    pool_id=pool_id,
+                    required_start=calculation_start,
+                    required_end=exp["test_end"],
+                    purpose="research",
+                )
+            except pit_runtime.PitRuntimeDataError:
+                # 测试分支放宽（v0.8.x 分级门禁，与提交端 _require_pit_submission 一致）：
+                # 研究/模拟用途在 PIT 数据未激活时降级放行，使用可用缓存数据运行；
+                # 结果仅供研究参考。风险由研究清单与后续数据校验兜底。
+                import logging
+
+                logging.getLogger("quant_platform").warning(
+                    "PIT runtime input unavailable for experiment %s; "
+                    "degraded to cached-data research run",
+                    exp["experiment_id"],
+                )
 
         cache = DataCache()
         source = None

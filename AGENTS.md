@@ -61,8 +61,11 @@ cd frontend && npm run lint && npm run test && npm run build
 
 ### 并行与合并
 
-- 每个 agent 在独立分支工作；合入 master 走 Merge Queue（GitHub 自动串行化）。
-- 冲突时：后到者 rebase 最新 master，读两边代码解决，重跑 CI。
+- 每个 agent 在独立分支工作；**版本 PR 默认合入 `test/integration`（测试分支）**。
+- **发布门禁**：master 只接受来自 `test/integration` 的发布 PR（CI 强制检查，
+  见 ci.yml release_source_check）；测试分支必须通过真实数据 E2E
+  （注册→实验→模拟盘→前端全链路）后才允许发布到 master。
+- 冲突时：后到者 rebase 最新测试分支，读两边代码解决，重跑 CI。
 - 语义冲突由契约快照 diff 暴露；用户是行为变化的最终确认人。
 
 ### 线路

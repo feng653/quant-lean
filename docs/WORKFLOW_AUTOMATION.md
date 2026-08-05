@@ -89,3 +89,22 @@
 **Merge Queue（可选增强）**：API 开启在免费版报错，需在 GitHub UI 手动开启：
 Settings → Rules → master-protection → 编辑 → 勾选 "Require merge queue"。
 开启后并发 PR 自动排队串行合并；未开启时靠"要求最新代码（strict）+ 手动按序合并"达到同样效果。
+
+## 八、测试分支与发布门禁（v0.9 工作流修订）
+
+```
+各版本 PR ──base: test/integration──→ test/integration（测试分支）
+                                          │ 真实数据 E2E 门禁：
+                                          │   注册→登录→创建实验(3+策略)→回测→指标
+                                          │   →部署模拟盘→跑一天→成交/净值
+                                          │   →前端启动→页面操作
+                                          ▼
+master（稳定）← 发布 PR（base: master, head: test/integration）← CI 强制检查来源
+```
+
+- **机器强制**：ci.yml `release_source_check` job——任何 base=master 的 PR，head 不是
+  `test/integration` 则 CI 失败（已纳入 Required checks）。
+- **指示层**：opencode.yml prompt 要求 agent 默认开 PR 到 test/integration。
+- **E2E 执行者**：用户/协调者在本地以 test/integration 分支跑真实数据全流程；
+  通过后由协调者发起发布 PR 到 master，用户 Approve。
+- **测试数据清理**：E2E 产生的实验/模拟盘记录在验收后清理（避免污染生产数据）。
