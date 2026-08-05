@@ -94,7 +94,7 @@ cd frontend && npm run lint && npm run test && npm run build
 
 ### 并行与合并
 
-- 每个 agent 在独立分支工作；**版本 PR 默认合入 `test/integration`（测试分支）**；**合并即删分支**（`opencode/T-xx-*`、`hotfix/*` 用完即删）。
+- 每个 agent 在独立分支工作；**任务 PR 默认合入 `dev`（开发汇聚层，fast 检查后自动合并）**；**dev 攒批（≥8 提交）自动创建批 PR → `test/integration`（全量测试）→ 发布 PR → master**；**合并即删分支**（`opencode/T-xx-*`、`hotfix/*` 用完即删）。
 - **发布门禁（三层，全机器强制）**：
   - L1 契约快照：181 端点响应结构零漂移（CI 自动）。
   - L2 自动体检机：合成数据全链路（注册→实验→回测→模拟盘初始化，`tests/integration/test_e2e_availability.py`，CI 自动）。

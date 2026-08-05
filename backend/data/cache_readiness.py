@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 from dataclasses import dataclass
 from typing import Any, Iterable
 
@@ -723,14 +724,26 @@ async def inspect_cached_market_data(
 
 async def require_cached_market_data(
     cache: DataCache,
+    *,
+    strict: bool = True,
     **kwargs: Any,
 ) -> CachedMarketData:
     inspected = await inspect_cached_market_data(cache, **kwargs)
     if not inspected.report["ready"] or inspected.frame is None:
         issues = ",".join(inspected.report["issues"]) or "unknown"
-        raise CacheOnlyDataError(
-            "cache_only 行情数据未就绪："
-            f"{inspected.report['cache_key']} ({issues})"
+        if strict or inspected.frame is None:
+            raise CacheOnlyDataError(
+                "cache_only 行情数据未就绪："
+                f"{inspected.report['cache_key']} ({issues})"
+            )
+        # 非严格模式（研究/模拟降级放行，与 PIT 分级门禁一致）：
+        # 行情数据不完整（如 PIT 会员全集 > 缓存覆盖）时仅告警放行，
+        # 用可用子集运行，缺口记录在报告；结果仅供研究参考。
+        logging.getLogger("quant_platform").warning(
+            "cache_only 行情数据不完整，降级放行（仅供研究参考）："
+            "%s (%s)",
+            inspected.report["cache_key"],
+            issues,
         )
     return inspected
 

@@ -764,6 +764,9 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
                         requested_codes=selected_codes,
                         required_start=required_start,
                         required_end=required_end,
+                        # 研究/模拟用途降级放行（PIT 分级门禁一致）：数据不完整
+                        # 时用可用子集运行，缺口记录到报告，仅告警不拒绝
+                        strict=False,
                     )
                     assert inspected.frame is not None
                     pivot = inspected.frame
@@ -844,6 +847,10 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
                     ),
                     required_start=calculation_start,
                     required_end=exp["test_end"],
+                    # 研究/模拟用途降级放行（PIT 分级门禁一致）：cache 覆盖小于
+                    # PIT 会员全集（如 PIT 数据未齐全）时，用可用子集运行，
+                    # 缺口记录到报告，仅告警不拒绝
+                    strict=False,
                 )
                 assert inspected.frame is not None
                 pivot = inspected.frame

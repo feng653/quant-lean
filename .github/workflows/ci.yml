@@ -1,13 +1,85 @@
 name: CI Pipeline
 
+# CI 豁免矩阵（纯文档/静态资源/配置类改动不触发 CI）：
+# - docs/**、*.md、docs/assets/**（图片）→ 完全豁免
+# - deploy/macos/*.plist、frontend/README.md → 完全豁免（部署配置/前端文档）
+# - data/tuning/*.json → 完全豁免（调参记录，非代码）
+# - .opencode/agents/*.md → 完全豁免（agent 提示词）
+# - .github/workflows/*  → 强制 full（工作流改坏会绕过门禁，不可豁免）
+# - backend/tests/snapshots/ → full + 人工（行为变化红线）
 on:
   push:
-    branches: [master, 'feature/**', 'feat/**', 'fix/**', 'refactor/**']
+    branches: [master, dev, 'feature/**', 'feat/**', 'fix/**', 'refactor/**']
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'deploy/macos/*.plist'
+      - 'data/tuning/*.json'
+      - '.opencode/agents/*.md'
   pull_request:
-    branches: [master, 'test/**']
+    branches: [master, dev, 'test/**']
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'deploy/macos/*.plist'
+      - 'data/tuning/*.json'
+      - '.opencode/agents/*.md'
   merge_group:
 
 jobs:
+  # ── 分层判定：全量测试只跑在汇聚层（test/integration / master），
+  #    dev 层与普通分支只跑快速检查（fast_checks）。
+  tier:
+    name: Tier (full vs fast)
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.tier.outputs.full }}
+      skip: ${{ steps.tier.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: tier
+        shell: bash
+        run: |
+          base="${{ github.base_ref }}"
+          ref="${{ github.ref }}"
+          full="false"
+          skip="false"
+          # 汇聚层/发布层：全量
+          if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
+            full="true"
+          fi
+          # 工作流/CI 配置改动：强制全量（工作流改坏会绕过门禁，不能走 fast 层）
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # 用 base.sha 做三点 diff（覆盖多 commit PR；无需 fetch origin/$base）
+            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
+            if echo "$changed" | grep -qE '^\.github/workflows/'; then
+              echo "检测到工作流配置改动，强制 full tier"
+              full="true"
+            fi
+            # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
+            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+            if [[ -z "$non_ignored" ]]; then
+              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+              skip="true"
+            fi
+          else
+            # push 事件：改动含 .github/workflows 也强制全量（auto_merge 合并产生的 commit 与 HEAD~1 对比）
+            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+            if echo "$changed" | grep -qE '^\.github/workflows/'; then
+              echo "检测到工作流配置改动，强制 full tier"
+              full="true"
+            fi
+            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+            if [[ -z "$non_ignored" ]]; then
+              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+              skip="true"
+            fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
   release_source_check:
     name: Release source check
     runs-on: ubuntu-latest
@@ -29,8 +101,30 @@ jobs:
           fi
           echo "✅ head 为 test/integration，允许发布。"
 
+  fast_checks:
+    name: Fast checks (ruff + smoke)
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - run: ruff check backend/ tests/integration/ conftest.py
+      - name: Python import smoke (backend boots)
+        run: |
+          python -c "from backend.main import app; print('app imports OK')"
+      - name: Fast unit subset (core + jobs broker)
+        run: python -m pytest backend/tests/test_core.py backend/tests/test_core_hashing.py backend/tests/test_core_timeutils.py backend/tests/test_jwt_security.py -q --tb=short --timeout=120
+
   backend:
     name: Backend (${{ matrix.os }})
+    if: needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -72,6 +166,8 @@ jobs:
 
   health_check:
     name: L2 health check (synthetic E2E)
+    if: needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,6 +181,8 @@ jobs:
 
   frontend:
     name: Frontend
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -106,6 +204,8 @@ jobs:
 
   snapshot_baseline_diff:
     name: Snapshot baseline diff
+    if: needs.tier.outputs.skip != 'true'
+    needs: [tier]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -139,23 +239,40 @@ jobs:
   summary:
     name: Required checks
     runs-on: ubuntu-latest
-    needs: [release_source_check, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff]
+    needs: [release_source_check, fast_checks, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff, tier]
     if: always()
     steps:
       - name: Verify required jobs
         shell: bash
         run: |
-          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.backend.result }}" != "success" || "${{ needs.health_check.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.contract_snapshot.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
-            echo "One or more required jobs failed."
+          SKIP="${{ needs.tier.outputs.skip }}"
+          FULL="${{ needs.tier.outputs.full }}"
+          # 纯文档/豁免路径改动：CI 主体跳过，直接通过
+          if [[ "$SKIP" == "true" ]]; then
+            echo "纯文档/配置改动，CI 豁免（skip=true），通过。"
+            exit 0
+          fi
+          # fast 层：release_source_check + fast_checks + frontend + snapshot_baseline_diff 必绿
+          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.fast_checks.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
+            echo "One or more fast-tier required jobs failed."
             exit 1
+          fi
+          # full 层：backend + health_check + contract_snapshot 也必须绿
+          if [[ "$FULL" == "true" ]]; then
+            if [[ "${{ needs.backend.result }}" != "success" || "${{ needs.health_check.result }}" != "success" || "${{ needs.contract_snapshot.result }}" != "success" ]]; then
+              echo "One or more full-tier required jobs failed."
+              exit 1
+            fi
+          else
+            echo "fast 层通过（全量测试在汇聚层 test/integration 执行）"
           fi
           echo "All required checks passed."
 
   contract_snapshot:
     name: Contract snapshot diff
     runs-on: ubuntu-latest
-    needs: [backend]
-    if: always()
+    needs: [tier, backend]
+    if: always() && needs.tier.outputs.full == 'true' && needs.tier.outputs.skip != 'true'
     steps:
       - uses: actions/checkout@v6
         with:
