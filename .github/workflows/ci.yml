@@ -16,16 +16,35 @@ jobs:
     outputs:
       full: ${{ steps.tier.outputs.full }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: tier
         shell: bash
         run: |
           base="${{ github.base_ref }}"
           ref="${{ github.ref }}"
+          full="false"
+          # 汇聚层/发布层：全量
           if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
-            echo "full=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "full=false" >> "$GITHUB_OUTPUT"
+            full="true"
           fi
+          # 工作流/CI 配置改动：强制全量（工作流改坏会绕过门禁，不能走 fast 层）
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            changed="$(git diff --name-only "origin/$base...HEAD" 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+            if echo "$changed" | grep -qE '^\.github/workflows/'; then
+              echo "检测到工作流配置改动，强制 full tier"
+              full="true"
+            fi
+          else
+            # push 事件：改动含 .github/workflows 也强制全量
+            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+            if echo "$changed" | grep -qE '^\.github/workflows/'; then
+              echo "检测到工作流配置改动，强制 full tier"
+              full="true"
+            fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
 
   release_source_check:
     name: Release source check

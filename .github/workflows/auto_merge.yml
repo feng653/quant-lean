@@ -39,10 +39,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # 0) dev 领先阈值检查：dev 领先 test/integration ≥ 8 提交时，不再自动合并新 PR 到 dev
+          #    （强制等待 batch_promote.yml 创建批 PR，避免无限积压在 fast 层）
+          git fetch origin test/integration --depth=200 2>/dev/null || true
+          dev_lead="$(git rev-list --count origin/test/integration..origin/dev 2>/dev/null || echo 0)"
+          echo "dev 领先 test/integration: $dev_lead 提交"
           for pr in ${{ steps.prs.outputs.pr_numbers }}; do
             echo "=== 检查 PR #$pr ==="
             base="$(gh pr view "$pr" --json baseRefName -q .baseRefName 2>/dev/null || echo unknown)"
             echo "  base: $base"
+            # 0.5) dev 积压闸门：dev 层 PR 且 dev 领先超阈值 → 跳过，等批 PR
+            if [[ "$base" == "dev" && "$dev_lead" -ge 8 ]]; then
+              echo "  ⏸ dev 已领先 test/integration ≥ 8 提交，暂停合入 dev（等待批 PR 全量验证）"
+              gh pr comment "$pr" --body "⏸ dev 积压闸门：dev 已领先 test/integration ≥ 8 提交，自动合入 dev 暂停。等待 batch_promote 创建批 PR（dev → test/integration 全量验证）后再合并。" 2>/dev/null || true
+              continue
+            fi
             # 1) 快照目录改动 → 必须人工 Approve（行为变化红线），自动合并跳过
             snapshot_files="$(gh pr diff "$pr" --name-only 2>/dev/null | grep -c '^backend/tests/snapshots/' || true)"
             if [[ "$snapshot_files" != "0" ]]; then
@@ -58,21 +69,37 @@ jobs:
               gh pr comment "$pr" --body "⏸ 自动合并跳过：改动涉及端点/数据结构但未带 \`behavior-change\` 标签。若属行为变化请补标签（需用户 Approve）；若确属无行为变化请说明。" 2>/dev/null || true
               continue
             fi
-            # 3) CI 状态：所有 check 必须存在且全 SUCCESS（含 required），不允许 pending/失败
+            # 3) CI 状态：分层判定
+            #    dev 层 PR：只需 Fast checks + Frontend + Snapshot baseline 绿（全量在批 PR 跑）
+            #    test/integration 目标 PR：所有 check 必须 SUCCESS 且无 pending
             state="$(gh pr view "$pr" --json statusCheckRollup -q '
               .statusCheckRollup as $c |
               if ($c | length) == 0 then "no_checks"
               else
-                (($c | map(select(.conclusion != null)) | map(.conclusion == "SUCCESS")) | all) as $all_ok |
                 (($c | map(select(.conclusion == null)) | length) > 0) as $any_pending |
                 if $any_pending then "pending"
-                elif $all_ok then "green"
+                elif (($c | map(select(.conclusion != null)) | map(.conclusion == "SUCCESS")) | all) then "green"
                 else "red" end
               end' 2>/dev/null || echo unknown)"
             echo "  CI 状态: $state"
-            if [[ "$state" != "green" ]]; then
-              echo "  ⏸ CI 未全绿（$state），跳过"
-              continue
+            if [[ "$base" == "test/integration" ]]; then
+              # 汇聚层：必须全绿（含 Backend 全量 + L2 + 快照）
+              if [[ "$state" != "green" ]]; then
+                echo "  ⏸ test/integration 目标需全量 CI 全绿（$state），跳过"
+                continue
+              fi
+            else
+              # dev 层：只需 fast 层关键 check 绿（Fast checks / Frontend / Snapshot baseline）
+              # 全量 check（Backend/L2/Contract）在 dev 层不运行（skipped），不阻塞 dev 合并
+              fast_state="$(gh pr view "$pr" --json statusCheckRollup -q '
+                .statusCheckRollup as $c |
+                (($c | map(select(.name == "Fast checks (ruff + smoke)" or .name == "Frontend" or .name == "Snapshot baseline diff")) | map(select(.conclusion != null)) | map(.conclusion == "SUCCESS")) | all) as $fast_ok |
+                if $fast_ok then "green" else "not_green" end' 2>/dev/null || echo unknown)"
+              echo "  dev 层 fast checks 状态: $fast_state"
+              if [[ "$fast_state" != "green" ]]; then
+                echo "  ⏸ dev 层 fast checks 未全绿，跳过"
+                continue
+              fi
             fi
             # 4) 无 conflict + 可合并
             mergeable="$(gh pr view "$pr" --json mergeable -q .mergeable 2>/dev/null || echo UNKNOWN)"
