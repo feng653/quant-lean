@@ -110,8 +110,11 @@ jobs:
               # 全量 check（Backend/L2/Contract）在 dev 层不运行（skipped），不阻塞 dev 合并
               fast_state="$(gh pr view "$pr" --json statusCheckRollup -q '
                 .statusCheckRollup as $c |
-                (($c | map(select(.name == "Fast checks (ruff + smoke)" or .name == "Frontend" or .name == "Snapshot baseline diff")) | map(select(.conclusion != null and .conclusion != "SKIPPED")) | map(.conclusion == "SUCCESS")) | all) as $fast_ok |
-                if $fast_ok then "green" else "not_green" end' 2>/dev/null || echo unknown)"
+                ($c | map(select(.name == "Fast checks (ruff + smoke)" or .name == "Frontend" or .name == "Snapshot baseline diff"))) as $target |
+                if ($target | length) == 0 then "no_checks"
+                elif (($target | map(.conclusion == null)) | any) then "pending"
+                elif (($target | map(select(.conclusion != null and .conclusion != "SKIPPED")) | map(.conclusion == "SUCCESS")) | all) then "green"
+                else "not_green" end' 2>/dev/null || echo unknown)"
               echo "  dev 层 fast checks 状态: $fast_state"
               if [[ "$fast_state" != "green" ]]; then
                 echo "  ⏸ dev 层 fast checks 未全绿，跳过"
