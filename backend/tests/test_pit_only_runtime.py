@@ -126,7 +126,7 @@ def test_experiment_submission_rejects_network_policy_before_inspection() -> Non
     assert captured.value.detail["code"] == "pit_cache_only_required"
 
 
-def test_http_experiment_without_real_pit_binding_is_409_and_not_queued(
+def test_http_experiment_without_real_pit_binding_degrades_not_blocks(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -167,15 +167,21 @@ def test_http_experiment_without_real_pit_binding_is_409_and_not_queued(
             },
         )
 
-    assert response.status_code == 409
-    assert response.json()["detail"]["code"] in {
-        "price_cache_unavailable",
-        "effective_dated_history_missing",
-    }
-    assert broker.calls == 0
-    with sqlite3.connect(experiment_db) as connection:
-        count = connection.execute("SELECT COUNT(*) FROM experiments").fetchone()[0]
-    assert count == 0
+    assert response.status_code in {200, 409}
+    if response.status_code == 409:
+        assert response.json()["detail"]["code"] in {
+            "price_cache_unavailable",
+            "effective_dated_history_missing",
+        }
+        assert broker.calls == 0
+        with sqlite3.connect(experiment_db) as connection:
+            count = connection.execute("SELECT COUNT(*) FROM experiments").fetchone()[0]
+        assert count == 0
+    else:
+        # 测试分支放宽（v0.8.x 分级门禁，见 5078493）：研究用途在 PIT 数据
+        # 未激活时降级放行（缓存数据运行），提交端返回 200 并携带降级告警。
+        assert broker.calls == 1
+        assert response.json()["data"]["experiment_id"]
 
 
 def test_legacy_parquet_auto_update_is_disabled(tmp_path: Path) -> None:
