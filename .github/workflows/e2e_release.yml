@@ -14,7 +14,12 @@ jobs:
     name: e2e-release-verification
     # 真实数据（31G）只存在于本地 runner；任何第三方触发即远程代码执行。
     # 与 opencode.yml 同策略：只允许仓库拥有者 feng653 触发。
-    if: github.actor == 'feng653'
+    # 只对发布 PR（head=test/integration → master）跑真实验收；
+    # 非法 base master 的任务 PR 不触发（避免白跑 31G 验收）。
+    if: >-
+      github.actor == 'feng653' && (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.ref == 'test/integration')
     runs-on: [self-hosted, macos, arm64]
     timeout-minutes: 180
     steps:
