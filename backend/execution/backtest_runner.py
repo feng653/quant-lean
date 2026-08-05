@@ -958,11 +958,14 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
             pivot = select_market_data_for_timeline(
                 pivot,
                 point_in_time_timeline,
+                # 研究/模拟降级放行（PIT 分级门禁）：会员价格列缺失时用可用子集
+                strict=False,
             )
             if raw_execution_pivot is not None:
                 raw_execution_pivot = select_market_data_for_timeline(
                     raw_execution_pivot,
                     point_in_time_timeline,
+                    strict=False,
                 )
         elif (
             not uses_immutable_snapshot
@@ -972,8 +975,7 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
             timeline_identity = (
                 research_market_result.get("report", {}).get(
                     "timeline_identity"
-                )
-                if research_market_result is not None
+                )                if research_market_result is not None
                 else None
             )
             if not isinstance(timeline_identity, dict):
@@ -989,6 +991,9 @@ async def run_experiment(exp_id: int, job_uuid: str) -> None:
             pivot = select_market_data_for_timeline(
                 pivot,
                 point_in_time_timeline,
+                # 研究/模拟降级放行（PIT 分级门禁）：research trusted 数据
+                # 在 PIT 会员数据未齐全时用可用子集运行
+                strict=False,
             )
         elif uses_immutable_snapshot and universe_snapshot is not None:
             timeline_identity = universe_snapshot.timeline_identity
