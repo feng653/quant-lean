@@ -1,0 +1,30 @@
+name: e2e-release-verification
+
+# L3 真实验收（占位骨架，fail-closed）。
+# 由项目 agent 按 docs/WORKFLOW_AUTOMATION.md「三层可用性门禁」补全业务步骤：
+#   preflight（端口归属/磁盘/worker 槽位/旧任务清理）→ 启动后端 →
+#   真实数据全流程（注册→创建→执行→指标→部署模拟盘→初始化确认→清理）→ 前端 →
+#   输出 E2E 报告 json + 退出码（0=通过）。
+# 完成后：把本 job 名加入 master 保护 ruleset 的 required_status_checks，
+# 发布 PR 必须本 check 绿才能合并（机器检查报告，无需人看）。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e-release-verification:
+    # 安全门控：本地 runner 有完整机器权限，只允许仓库拥有者 {{ACTOR}} 触发。
+    if: github.actor == '{{ACTOR}}'
+    runs-on: [self-hosted, macos, arm64]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: test/integration
+      - name: Run real-data E2E (implement me)
+        run: |
+          echo "❌ L3 真实验收未实现（占位 fail-closed）：按 docs/WORKFLOW_AUTOMATION.md 补全后本 check 才允许发布。"
+          echo "要求：报告 json + 退出码 0=通过；验收口径：模拟盘初始化成功（部署 active）即可。"
+          exit 1

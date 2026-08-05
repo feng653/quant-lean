@@ -1,0 +1,72 @@
+name: opencode
+
+on:
+  issues:
+    types: [opened, labeled, edited]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  opencode:
+    # 安全门控：公开仓库 + 本地 runner，只允许仓库拥有者 {{ACTOR}} 触发。
+    # 本地 runner 有完整本机访问权（数据/工具链），任何第三方触发即远程代码执行。
+    if: >-
+      github.actor == '{{ACTOR}}' && (
+        (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'agent')) ||
+        (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))) ||
+        github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, macos, arm64]
+    timeout-minutes: 300
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Parallel eligibility guard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python .github/scripts/check_parallel.py
+
+      - name: Configure git credentials for agent pushes
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "opencode-bot"
+          git config --global user.email "opencode-bot@users.noreply.github.com"
+          git config --global credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+
+      - name: Run OpenCode agent
+        uses: anomalyco/opencode/github@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CI 专用配置：一次性 runner 全权限（含 rm -rf），避免非交互模式权限询问挂死。
+          # 本地交互模式仍使用仓库根 opencode.json（保留安全网）。
+          OPENCODE_CONFIG: ${{ github.workspace }}/.github/opencode-ci.json
+        with:
+          use_github_token: true
+          model: ${{ vars.AGENT_MODEL || 'deepseek/deepseek-v4-flash' }}
+          agent: req-executor
+          prompt: |
+            你是本仓库的"需求执行者"。请完整遵守根目录 AGENTS.md 和 docs/PROJECT_PHILOSOPHY.md、
+            docs/WORKFLOW_AUTOMATION.md、docs/VERSIONING.md 的规则。
+            对当前 issue/评论中的需求：
+            1. 先读 docs/todo/TODO_INDEX.md 确认版本状态，只做当前版本方向内的改动。
+            2. 分析代码，提出实现方案（改哪些文件、是否行为变化）。
+            3. 在独立分支实现，跑完整验证。
+            4. 开 PR：描述里写清改动、测试结果、快照状态（零 diff 或显式变更清单）。
+               默认 base 分支为 test/integration（所有在途版本汇聚测试分支，三层门禁
+               通过后才发布到 master）；除非任务明确要求修改 master 基础设施。
+            5. 若开 PR 被 GitHub 拒绝（403 not permitted）：把代码 commit + push 到分支，
+               在 issue 评论写明"分支名: <branch>"，结束。
+            行为不变的任务不得改动契约快照目录。
