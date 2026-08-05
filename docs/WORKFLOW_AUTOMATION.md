@@ -76,15 +76,28 @@
 
 | 文件 | 触发 | 作用 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
+| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 快照基线比对 + 前端 build |
 | `.github/workflows/opencode.yml` | issue 加标签 / 评论 /oc | issue → agent → PR 自动流水线 |
 | `.github/workflows/release.yml` | tag push | 发布验证 + 版本证据归档 |
 
-## 七、已生效的 master 保护（ruleset: master-protection）
+## 七、已生效的分支保护（rulesets）
 
-- required_status_checks：CI 的 "Required checks" 必须通过才能合入
-- pull_request：所有改动必须走 PR，禁止直接 push master
+### master-protection（master）
+
+- required_status_checks：CI 的 "Required checks"（含 `Contract snapshot diff` + `Snapshot baseline diff`）必须通过才能合入
+- pull_request：所有改动必须走 PR，禁止直接 push master；**`require_code_owner_review` 开启**——`backend/tests/snapshots/` 归 @feng653 所有（`.github/CODEOWNERS`），动快照的 PR 必须用户 Approve
 - non_fast_forward + deletion：禁止强推、禁止删分支
+
+### test-integration-protection（test/integration）
+
+- pull_request：所有改动必须走 PR + **同样的 codeowner 审批**（动快照必须用户 Approve，堵住"静默改快照混进测试分支 → 随发布 PR 进 master"的路径）
+- non_fast_forward + deletion：禁止强推、禁止删分支
+- 不强制 status checks（避免把 L3 真实验收强加到每个版本 PR）
+
+### 防静默改快照（双保险，机器强制）
+
+1. **`Snapshot baseline diff` job**（Required checks）：比对 PR 与 base 分支的 `backend/tests/snapshots/`——快照有改动但 PR 未带 `behavior-change` 标签 → job 红，无法合并。
+2. **codeowner 审批**：任何动快照的 PR 必须用户 Approve（行为变化的最终确认人），agent 无法自行绕过。
 
 **Merge Queue（可选增强）**：API 开启在免费版报错，需在 GitHub UI 手动开启：
 Settings → Rules → master-protection → 编辑 → 勾选 "Require merge queue"。

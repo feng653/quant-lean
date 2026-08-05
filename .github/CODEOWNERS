@@ -1,0 +1,3 @@
+# 契约快照 = 行为变化声明书：任何改动必须由用户（行为变化最终确认人）审批。
+# ruleset（master-protection）已开启 require_code_owner_review，动此目录的 PR 必须 @feng653 Approve。
+/backend/tests/snapshots/ @feng653
