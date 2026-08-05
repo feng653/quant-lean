@@ -612,7 +612,7 @@ class TestExperimentsAPI:
         )
         assert resp.status_code == 403
 
-    def test_create_experiment_fails_closed_without_pit_runtime(
+    def test_create_experiment_degrades_without_pit_runtime(
         self,
         setup_strategies,
         admin_token,
@@ -643,11 +643,10 @@ class TestExperimentsAPI:
         )
         if resp.status_code == 403:
             pytest.skip("Admin user lacks experiments:create permission")
-        assert resp.status_code == 409, resp.text
-        detail = resp.json()["detail"]
-        assert detail["code"] == "price_cache_unavailable"
-        assert detail["data_policy"] == "pit_cache_only"
-        assert detail["retryable_after_governance_activation"] is True
+        # 测试分支放宽（v0.8.x 分级门禁，见 5078493）：研究用途在 PIT 数据
+        # 未激活时降级放行（缓存数据运行），提交端返回 200 并创建实验。
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["data"]["experiment_id"]
 
     def test_get_experiment_detail_not_found(self, auth_token):
         resp = client.get("/api/experiments/999999", headers=_auth_headers(auth_token))
