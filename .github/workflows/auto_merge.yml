@@ -128,4 +128,19 @@ jobs:
             echo "  ✅ 自动合并 PR #$pr (base=$base)"
             gh pr merge "$pr" --merge --auto 2>/dev/null || gh pr merge "$pr" --merge 2>/dev/null \
               || echo "  ⚠️ 合并失败（可能是 ruleset 条件未满足）"
+            # 6) 关闭关联 issue（仅 test/integration 层：全量验证通过后任务才算完成）
+            #    PR 描述含 `Closes #n` 时 GitHub 原生自动关；这里兜底处理 closesIssues
+            #    元数据（含 dev 层合并后被解析出来的），确保 dev→test 批 PR 后 issue 关闭。
+            if [[ "$base" == "test/integration" ]]; then
+              linked="$(gh pr view "$pr" --json closesIssues -q '.closesIssues[].number' 2>/dev/null || true)"
+              if [[ -n "$linked" ]]; then
+                for num in $linked; do
+                  state="$(gh issue view "$num" --json state -q .state 2>/dev/null || echo '')"
+                  if [[ "$state" == "OPEN" ]]; then
+                    gh issue close "$num" --comment "✅ 已随 PR #$pr 合入 test/integration（全量验证通过），issue 自动关闭。" 2>/dev/null \
+                      && echo "  🔒 已关闭 issue #$num" || echo "  ⚠️ 关闭 issue #$num 失败"
+                  fi
+                done
+              fi
+            fi
           done
