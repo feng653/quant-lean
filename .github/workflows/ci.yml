@@ -52,7 +52,8 @@ jobs:
           fi
           # 工作流/CI 配置改动：强制全量（工作流改坏会绕过门禁，不能走 fast 层）
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            changed="$(git diff --name-only "origin/$base...HEAD" 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+            # 用 base.sha 做三点 diff（覆盖多 commit PR；无需 fetch origin/$base）
+            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
             if echo "$changed" | grep -qE '^\.github/workflows/'; then
               echo "检测到工作流配置改动，强制 full tier"
               full="true"
@@ -64,7 +65,7 @@ jobs:
               skip="true"
             fi
           else
-            # push 事件：改动含 .github/workflows 也强制全量
+            # push 事件：改动含 .github/workflows 也强制全量（auto_merge 合并产生的 commit 与 HEAD~1 对比）
             changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
             if echo "$changed" | grep -qE '^\.github/workflows/'; then
               echo "检测到工作流配置改动，强制 full tier"

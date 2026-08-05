@@ -73,13 +73,15 @@ jobs:
             #    纯文档 PR（skip=true）：Required checks 会通过（summary 直接放行），可直接合并
             #    dev 层 PR：只需 Fast checks + Frontend + Snapshot baseline 绿
             #    test/integration 目标 PR：所有 check 必须 SUCCESS 且无 pending
+            #    注意：dev 层 full 级 job（Backend/L2/Contract）会被 tier 跳过（SKIPPED），
+            #    必须排除 SKIPPED，否则全部判定会误判 red → dev PR 永不自动合并。
             state="$(gh pr view "$pr" --json statusCheckRollup -q '
               .statusCheckRollup as $c |
               if ($c | length) == 0 then "no_checks"
               else
                 (($c | map(select(.conclusion == null)) | length) > 0) as $any_pending |
                 if $any_pending then "pending"
-                elif (($c | map(select(.conclusion != null)) | map(.conclusion == "SUCCESS")) | all) then "green"
+                elif (($c | map(select(.conclusion != null and .conclusion != "SKIPPED")) | map(.conclusion == "SUCCESS")) | all) then "green"
                 else "red" end
               end' 2>/dev/null || echo unknown)"
             echo "  CI 状态: $state"
@@ -108,7 +110,7 @@ jobs:
               # 全量 check（Backend/L2/Contract）在 dev 层不运行（skipped），不阻塞 dev 合并
               fast_state="$(gh pr view "$pr" --json statusCheckRollup -q '
                 .statusCheckRollup as $c |
-                (($c | map(select(.name == "Fast checks (ruff + smoke)" or .name == "Frontend" or .name == "Snapshot baseline diff")) | map(select(.conclusion != null)) | map(.conclusion == "SUCCESS")) | all) as $fast_ok |
+                (($c | map(select(.name == "Fast checks (ruff + smoke)" or .name == "Frontend" or .name == "Snapshot baseline diff")) | map(select(.conclusion != null and .conclusion != "SKIPPED")) | map(.conclusion == "SUCCESS")) | all) as $fast_ok |
                 if $fast_ok then "green" else "not_green" end' 2>/dev/null || echo unknown)"
               echo "  dev 层 fast checks 状态: $fast_state"
               if [[ "$fast_state" != "green" ]]; then
