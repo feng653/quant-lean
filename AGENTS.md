@@ -54,10 +54,10 @@ cd frontend && npm run lint && npm run test && npm run build
 
 **边界（不可逾越）**：
 - **不做用户要求之外的规划**——用户没提的方向，不主动加任务、不开 issue、不扩展范围、不自行决定新版本内容。
-- 规划（分支/版本）以用户要求和 `docs/WORKFLOW_UPDATE_PLAN.md` 为唯一依据。
-- 需要用户决策时提问确认，不替用户拍板。
+- 规划（分支/版本）以用户要求为唯一依据；当前过渡期以 `docs/WORKFLOW_UPDATE_PLAN.md` 为临时执行清单（完成即弃）。
 
-开工顺序：读本文件 → 读 `docs/WORKFLOW_UPDATE_PLAN.md`（方案与实施清单）→ 读 `docs/todo/TODO_INDEX.md`（当前队列）→ 执行用户要求。
+开工顺序：读本文件 → 读 `docs/todo/TODO_INDEX.md`（当前队列）→ 执行用户要求。
+> 注意：`docs/WORKFLOW_UPDATE_PLAN.md` 只是**临时下一步计划**（当前过渡期一次性使用，阶段完成后删除），不是宪法；它只指导"现在下一步做什么"，长期规则以本文件与四份宪法为准。
 
 ### 任务模型
 
