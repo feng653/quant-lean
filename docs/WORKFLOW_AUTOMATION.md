@@ -108,3 +108,5 @@ master（稳定）← 发布 PR（base: master, head: test/integration）← CI 
 - **E2E 执行者**：用户/协调者在本地以 test/integration 分支跑真实数据全流程；
   通过后由协调者发起发布 PR 到 master，用户 Approve。
 - **测试数据清理**：E2E 产生的实验/模拟盘记录在验收后清理（避免污染生产数据）。
+
+> 权限体系（各级权限/矩阵/安全边界）：见 `docs/WORKFLOW_PERMISSIONS.md`
