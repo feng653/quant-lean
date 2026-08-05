@@ -29,6 +29,24 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # 安全文件白名单：改动仅含 opencode.yml（无任何产品/门禁文件）的发布 PR
+      # 跳过真实数据验收（E2E 测的是产品代码，纯 agent 工作流改动不影响产品）。
+      # job 直接 exit 0 → required check 绿，不阻塞合并；workflow_dispatch 手动触发
+      # 永远全量执行（无 PR 上下文，不走本步骤）。
+      - name: Safe-change skip (workflow-only PR)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          changed="$(gh pr diff ${{ github.event.pull_request.number }} --name-only 2>/dev/null || true)"
+          non_safe="$(echo "$changed" | grep -vE '^\.github/workflows/opencode\.yml$' | grep -v '^$' || true)"
+          if [[ -n "$changed" && -z "$non_safe" ]]; then
+            echo "✅ 仅安全文件（opencode.yml）改动，跳过真实数据验收（E2E check 直接通过）"
+            exit 0
+          fi
+          echo "含产品/门禁改动，继续完整 E2E 验收"
+
       - name: Configure git credentials (for fetch on project root)
         shell: bash
         env:

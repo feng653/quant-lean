@@ -46,46 +46,37 @@ jobs:
           ref="${{ github.ref }}"
           full="false"
           skip="false"
-          # 汇聚层/发布层：全量
+          # 计算 changed（PR 事件：base.sha 三点 diff 覆盖多 commit；push 事件：HEAD~1..HEAD）
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
+          else
+            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+          fi
+          # 汇聚层/发布层：全量（若为纯安全文件改动，下方白名单豁免会覆盖）
           if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
             full="true"
           fi
-          # 工作流改动分层：门禁/流水线文件 → 强制 full（改坏会绕过门禁）；
-          # 仅 agent 工作流（opencode.yml）→ 走常规分层（fast）——agent 执行环境改坏
-          # 只会让 agent 任务失败，不绕过任何测试门禁。安全白名单：opencode.yml；
-          # 新 workflow 文件默认按门禁处理（full），除非显式列入白名单。
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # 用 base.sha 做三点 diff（覆盖多 commit PR；无需 fetch origin/$base）
-            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
-            unsafe_wf="$(echo "$changed" | grep -E '^\.github/workflows/' | grep -v '^\.github/workflows/opencode\.yml$' || true)"
-            if [[ -n "$unsafe_wf" ]]; then
-              echo "检测到门禁/流水线工作流改动，强制 full tier"
-              full="true"
-            else
-              echo "仅 agent 工作流（opencode.yml）改动或无工作流改动，走分层判定"
-            fi
-            # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
-            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
-            if [[ -z "$non_ignored" ]]; then
-              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
-              skip="true"
-            fi
-          else
-            # push 事件：门禁工作流改动也强制全量（auto_merge 合并产生的 commit 与 HEAD~1 对比）；
-            # 仅 opencode.yml 改动不强制 full（与 PR 事件同一白名单逻辑）
-            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
-            unsafe_wf="$(echo "$changed" | grep -E '^\.github/workflows/' | grep -v '^\.github/workflows/opencode\.yml$' || true)"
-            if [[ -n "$unsafe_wf" ]]; then
-              echo "检测到门禁/流水线工作流改动，强制 full tier"
-              full="true"
-            else
-              echo "仅 agent 工作流（opencode.yml）改动或无工作流改动，走分层判定"
-            fi
-            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
-            if [[ -z "$non_ignored" ]]; then
-              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
-              skip="true"
-            fi
+          # 门禁/流水线工作流改动 → 强制 full（改坏会绕过门禁）。
+          # 安全白名单：opencode.yml（agent 执行环境，改坏只让 agent 任务失败，
+          # 不绕过任何测试门禁）。新 workflow 文件默认按门禁处理（full），
+          # 除非显式列入白名单。
+          unsafe_wf="$(echo "$changed" | grep -E '^\.github/workflows/' | grep -v '^\.github/workflows/opencode\.yml$' || true)"
+          if [[ -n "$unsafe_wf" ]]; then
+            echo "检测到门禁/流水线工作流改动，强制 full tier"
+            full="true"
+          fi
+          # 安全文件白名单豁免：改动仅含 opencode.yml（无其他任何文件）→ 不强制全量，
+          # 全链路（dev 层 / 批 PR / 发布 PR）均跳过耗时测试；master 合并仍保留人工确认。
+          safe_only="$(echo "$changed" | grep -vE '^\.github/workflows/opencode\.yml$' | grep -v '^$' || true)"
+          if [[ -n "$changed" && -z "$safe_only" ]]; then
+            echo "仅安全文件（opencode.yml）改动，豁免全量测试（fast 层即可）"
+            full="false"
+          fi
+          # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
+          non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+          if [[ -z "$non_ignored" ]]; then
+            echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+            skip="true"
           fi
           echo "full=$full" >> "$GITHUB_OUTPUT"
           echo "skip=$skip" >> "$GITHUB_OUTPUT"
