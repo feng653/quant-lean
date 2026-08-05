@@ -471,15 +471,16 @@ async def _require_pit_submission(
             purpose=purpose,
         )
     except PitRuntimeDataError as exc:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": exc.code,
-                "message": exc.message,
-                "data_policy": "pit_cache_only",
-                "retryable_after_governance_activation": True,
-            },
-        ) from exc
+        # 测试分支放宽（v0.8.x 分级门禁）：研究/模拟用途在 PIT 数据未激活时
+        # 降级为"告警放行"，允许使用可用缓存数据运行实验；实盘（L3，当前关闭）
+        # 保持硬锁语义不受影响。风险由研究清单与运行时数据校验兜底。
+        return {
+            "trust": "research_degraded_no_pit",
+            "warnings": [
+                f"PIT 数据未激活，实验将使用缓存数据运行（{exc.code}）；"
+                "结果仅供研究参考，不可作为实盘依据"
+            ],
+        }
     return None
 
 

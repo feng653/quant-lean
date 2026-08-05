@@ -76,16 +76,81 @@
 
 | 文件 | 触发 | 作用 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 前端 build |
+| `.github/workflows/ci.yml` | push / PR / merge_group | 门禁：lint + 单测 + 集成 + 快照 diff + 快照基线比对 + **L2 体检机** + 前端 build |
 | `.github/workflows/opencode.yml` | issue 加标签 / 评论 /oc | issue → agent → PR 自动流水线 |
 | `.github/workflows/release.yml` | tag push | 发布验证 + 版本证据归档 |
+| `.github/workflows/e2e_release.yml` | workflow_dispatch / master 目标 PR | **L3 真实数据自动验收**（本地 runner，机器检查） |
 
-## 七、已生效的 master 保护（ruleset: master-protection）
+## 七、已生效的分支保护（rulesets）
 
-- required_status_checks：CI 的 "Required checks" 必须通过才能合入
-- pull_request：所有改动必须走 PR，禁止直接 push master
+### master-protection（master）
+
+- required_status_checks：CI 的 "Required checks"（含 `Contract snapshot diff` + `Snapshot baseline diff`）+ **`e2e-release-verification`（L3 真实验收）**必须通过才能合入
+- pull_request：所有改动必须走 PR，禁止直接 push master；**`require_code_owner_review` 开启**——`backend/tests/snapshots/` 归 @feng653 所有（`.github/CODEOWNERS`），动快照的 PR 必须用户 Approve
 - non_fast_forward + deletion：禁止强推、禁止删分支
+
+### test-integration-protection（test/integration）
+
+- pull_request：所有改动必须走 PR + **同样的 codeowner 审批**（动快照必须用户 Approve，堵住"静默改快照混进测试分支 → 随发布 PR 进 master"的路径）
+- non_fast_forward + deletion：禁止强推、禁止删分支
+- 不强制 status checks（避免把 L3 真实验收强加到每个版本 PR）
 
 **Merge Queue（可选增强）**：API 开启在免费版报错，需在 GitHub UI 手动开启：
 Settings → Rules → master-protection → 编辑 → 勾选 "Require merge queue"。
 开启后并发 PR 自动排队串行合并；未开启时靠"要求最新代码（strict）+ 手动按序合并"达到同样效果。
+
+## 八、测试分支与三层发布门禁（全机器强制）
+
+```
+各版本 PR ──base: test/integration──→ test/integration（测试分支）
+                                          │
+                                          ▼
+                    ┌──────── 三层可用性门禁 ────────┐
+                    │ L1 契约快照：181 端点结构零漂移 │ CI 自动
+                    │ L2 自动体检机：合成数据全链路   │ CI 自动
+                    │   （注册→实验→回测→模拟盘初始化）│
+                    │ L3 真实数据自动验收：31G 真实   │ 本地 runner
+                    │   数据全流程，报告机器检查      │ e2e_release.yml
+                    └──────────────────────────────┘
+                                          │ 全绿
+                                          ▼
+master（稳定）← 发布 PR（base: master, head: test/integration）← CI 强制检查来源
+```
+
+### L1 契约快照（结构门禁）
+
+- 每次 PR 自动跑 `backend/tests/test_contract_lock.py`：181 端点响应结构零漂移（`Contract snapshot diff` job，**已纳入 Required checks**，红了不可合并）。
+- 行为不变的重构：快照零 diff；行为变化：显式更新快照 + PR 变更清单 + 用户确认。
+- **防静默改快照（机器强制，双保险）**：
+  - `Snapshot baseline diff` job（Required checks）：比对 PR 与 base 分支的 `backend/tests/snapshots/`——快照有改动但 PR 未带 `behavior-change` 标签 → job 红。
+  - CODEOWNERS + ruleset 审批：`backend/tests/snapshots/` 归 @feng653 所有；master 与 test/integration 的 ruleset 均开启 `require_code_owner_review` → 任何动快照的 PR（无论合哪条线）必须用户 Approve，agent 无法自行绕过。
+
+### L2 自动体检机（链路门禁）
+
+- `tests/integration/test_e2e_availability.py`：合成数据（300 股 × 300 日 + PIT 会员 + benchmark）
+  全链路——注册 → 3 实验 → **真实 worker 完成回测** → 指标 → 部署模拟盘 → 初始化确认 → 清理。
+- ci.yml 独立 job `L2 health check (synthetic E2E)`，纳入 Required checks。
+
+### L3 真实数据自动验收（真实门禁，v2 全自动）
+
+- `scripts/e2e_release.sh`：preflight（端口/磁盘≥5G）→ 启动后端（真实 data/）→ 3+ 策略实验
+  → job 完成 → 指标核对 → 模拟盘部署初始化（status active）→ 前端可达 → 清理实验
+  → 输出 `e2e-release-report.json` + 退出码（0=通过）。
+- `.github/workflows/e2e_release.yml`：`workflow_dispatch` 或 master 目标 PR 触发，
+  本地 runner（self-hosted, macos, arm64）执行；`actor==feng653` 门控（31G 数据 = 远程代码执行风险）；
+  报告存 artifact；**job 名 `e2e-release-verification`，报告由机器检查**。
+- **发布门禁**：ruleset（master-protection）已把 `e2e-release-verification` 加入
+  required_status_checks → 发布 PR 无 E2E check 或 check 红 = 不可合并。
+
+### 发布 DoD（缺一不可）
+
+1. L1 + L2 全绿（CI）
+2. L3 E2E check 绿（机器检查）
+3. 来源合法：master 只收来自 test/integration 的发布 PR（ci.yml release_source_check）
+4. 用户确认合并（唯一人工点）→ 打 tag v0.x.y
+
+- **E2E 执行者**：本地 runner 自动执行（workflow_dispatch / 发布 PR 自动触发），
+  用户/协调者不再手工跑验收。
+- **测试数据清理**：E2E 产生的实验在脚本内自动清理（部署保留供审查）。
+
+> 权限体系（各级权限/矩阵/安全边界）：见 `docs/WORKFLOW_PERMISSIONS.md`

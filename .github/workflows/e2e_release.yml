@@ -1,0 +1,78 @@
+name: E2E Release Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-release-verification:
+    name: e2e-release-verification
+    # 真实数据（31G）只存在于本地 runner；任何第三方触发即远程代码执行。
+    # 与 opencode.yml 同策略：只允许仓库拥有者 feng653 触发。
+    # 只对发布 PR（head=test/integration → master）跑真实验收；
+    # 非法 base master 的任务 PR 不触发（避免白跑 31G 验收）。
+    if: >-
+      github.actor == 'feng653' && (
+        github.event_name != 'pull_request' ||
+        github.event.pull_request.head.ref == 'test/integration')
+    runs-on: [self-hosted, macos, arm64]
+    timeout-minutes: 180
+    steps:
+      - name: Checkout repository (for SHA + workspace only)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Configure git credentials (for fetch on project root)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+
+      - name: Checkout tested commit in real project root
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # E2E 三要素（代码/.venv/31G data/）只有真实项目根齐全；runner checkout 目录两者皆无。
+          # 在真实项目根切到被测 commit 运行，跑完恢复原分支。
+          cd "$HOME/Developer/quant-lean"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "❌ 项目根工作区不干净（有未提交改动），E2E 拒绝运行："
+            git status --porcelain
+            exit 1
+          fi
+          echo "E2E_RESTORE_BRANCH=$(git branch --show-current)" >> "$GITHUB_ENV"
+          git fetch origin "$GITHUB_SHA" --depth=1
+          git checkout --detach "$GITHUB_SHA"
+          echo "✅ 项目根已切到被测 commit $GITHUB_SHA（原分支：$E2E_RESTORE_BRANCH）"
+
+      - name: Run real-data E2E release verification
+        shell: bash
+        run: |
+          cd "$HOME/Developer/quant-lean"
+          bash scripts/e2e_release.sh --report "$GITHUB_WORKSPACE/e2e-release-report.json"
+
+      - name: Upload E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-release-report
+          path: e2e-release-report.json
+          retention-days: 14
+
+      - name: Restore project root branch
+        if: always()
+        shell: bash
+        run: |
+          cd "$HOME/Developer/quant-lean"
+          branch="${E2E_RESTORE_BRANCH:-master}"
+          git checkout -f "$branch" 2>/dev/null || git checkout -f master
+          echo "✅ 项目根已恢复分支：$(git branch --show-current)"

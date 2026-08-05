@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, Iterable, Mapping, Sequence
 
+import logging
 import pandas as pd
 
 from backend.data.point_in_time_master import PointInTimeMasterStore
@@ -312,6 +313,7 @@ def validate_market_data_columns(
     timeline: PointInTimeUniverseTimeline,
     *,
     required_fields: Sequence[str] = REQUIRED_MARKET_FIELDS,
+    strict: bool = True,
 ) -> None:
     if not isinstance(frame.columns, pd.MultiIndex):
         raise PointInTimeUniverseError(
@@ -324,10 +326,17 @@ def validate_market_data_columns(
         fields_by_code.setdefault(code, set()).add(field)
     missing_codes = sorted(set(timeline.union_codes) - set(fields_by_code))
     if missing_codes:
-        raise PointInTimeUniverseError(
-            "membership_price_coverage_missing",
-            "historical member price columns missing: "
-            + ",".join(missing_codes[:20]),
+        if strict:
+            raise PointInTimeUniverseError(
+                "membership_price_coverage_missing",
+                "historical member price columns missing: "
+                + ",".join(missing_codes[:20]),
+            )
+        # 研究/模拟降级放行（PIT 分级门禁，与 cache_readiness strict=False 一致）：
+        # 会员价格列缺失时仅告警，用可用子集运行；结果仅供研究参考。
+        logging.getLogger("quant_platform").warning(
+            "historical member price columns missing（降级放行，仅供研究参考）：%s",
+            ",".join(missing_codes[:20]),
         )
     required = set(required_fields)
     missing_fields = {
@@ -336,9 +345,14 @@ def validate_market_data_columns(
         if required - fields_by_code.get(code, set())
     }
     if missing_fields:
-        raise PointInTimeUniverseError(
-            "membership_price_fields_missing",
-            "historical member OHLCV columns are incomplete",
+        if strict:
+            raise PointInTimeUniverseError(
+                "membership_price_fields_missing",
+                "historical member OHLCV columns are incomplete",
+            )
+        # 研究/模拟降级放行：字段缺失时仅告警（缺口已在上方记录）
+        logging.getLogger("quant_platform").warning(
+            "historical member OHLCV fields incomplete（降级放行，仅供研究参考）"
         )
 
 
@@ -396,6 +410,7 @@ def select_market_data_for_timeline(
     timeline: PointInTimeUniverseTimeline,
     *,
     required_fields: Sequence[str] = REQUIRED_MARKET_FIELDS,
+    strict: bool = True,
 ) -> pd.DataFrame:
     """Keep historical feature prices but remove securities never in the window."""
 
@@ -413,6 +428,7 @@ def select_market_data_for_timeline(
         frame,
         timeline,
         required_fields=required_fields,
+        strict=strict,
     )
     allowed = set(timeline.union_codes)
     return frame.loc[

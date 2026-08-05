@@ -392,14 +392,43 @@ async def create_deployment(
                 strategy_id=body.strategy_id,
             )
             if not eligibility.eligible:
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "code": "legacy_experiment_deployment_forbidden",
-                        "message": "历史非 PIT 实验不能进入部署或模拟交易链路",
-                        "eligibility_code": eligibility.code,
-                    },
+                # 研究降级放行（PIT 分级门禁，与提交端/worker 端一致）：
+                # PIT 数据未齐全时实验以 research_degraded_no_pit 降级运行；
+                # 个人模拟盘部署仅告警放行（结果仅供研究参考）。
+                # 非降级实验（如真实 PIT 证据缺失的其他原因）保持拒绝。
+                from backend.services.experiment_eligibility import (
+                    ExperimentEligibility,
                 )
+
+                degraded_no_pit = False
+                try:
+                    run_spec = _json.loads(
+                        source_snapshot.get("run_spec") or "{}"
+                    )
+                    trust = run_spec.get("research_trust") or {}
+                    degraded_no_pit = (
+                        trust.get("trust") == "research_degraded_no_pit"
+                    )
+                except (TypeError, ValueError):
+                    degraded_no_pit = False
+                if degraded_no_pit:
+                    source_eligibility = ExperimentEligibility(
+                        True,
+                        "research_degraded_paper_allowed",
+                        (
+                            "pit_degraded_no_pit",
+                            "paper_trading_research_only",
+                        ),
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=409,
+                        detail={
+                            "code": "legacy_experiment_deployment_forbidden",
+                            "message": "历史非 PIT 实验不能进入部署或模拟交易链路",
+                            "eligibility_code": eligibility.code,
+                        },
+                    )
             source_eligibility = eligibility
             cursor = await experiment_conn.execute(
                 "SELECT COUNT(*) FROM equity_curve WHERE experiment_id = ?",

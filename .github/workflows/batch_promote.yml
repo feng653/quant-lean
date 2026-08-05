@@ -1,0 +1,62 @@
+name: Batch promote dev -> test/integration
+
+# 硬控制：dev 攒批阈值。当 dev 领先 test/integration 达到阈值时，
+# 自动创建"批 PR"（dev → test/integration），触发全量 CI + L2 体检。
+# 原则：全量测试必须定期执行，不能无限期积压在 fast 层。
+
+on:
+  schedule:
+    # 每天 09:00 UTC（17:00 北京时间）检查一次，兜底时间阈值
+    - cron: '0 9 * * *'
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    name: Batch promote (dev ahead >= threshold)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute dev lead over test/integration
+        id: lead
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin test/integration --depth=200 2>/dev/null || true
+          git fetch origin dev --depth=200 2>/dev/null || true
+          # 领先提交数（dev 有而 test/integration 没有的）。
+          # 注意：cron/dispatch 触发时 checkout 的是默认分支（master），
+          # 不能依赖 HEAD，必须显式以 origin/dev 为基准。
+          lead="$(git rev-list --count origin/test/integration..origin/dev 2>/dev/null || echo 0)"
+          echo "lead=$lead" >> "$GITHUB_OUTPUT"
+          echo "dev 领先 test/integration: $lead 个提交"
+
+          # 是否已有进行中的批 PR
+          existing="$(gh pr list --base test/integration --head dev --state open --json number -q '.[].number' 2>/dev/null | head -1)"
+          echo "existing=$existing" >> "$GITHUB_OUTPUT"
+
+      - name: Create batch PR if lead >= threshold
+        if: steps.lead.outputs.lead >= '8' && steps.lead.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 自动合并后 dev 会先合入 test/integration，lead 重置
+          gh pr create \
+            --base test/integration \
+            --head dev \
+            --title "batch: dev → test/integration 批量汇聚（全量测试）" \
+            --body "批量汇聚 PR（自动生成）：dev 已领先 test/integration 达阈值，触发全量测试（Backend 1207 单测 + 集成 + L2 体检 + 契约快照）。合并后 lead 归零。由 batch_promote.yml 自动创建。" 2>&1 | tail -1
+
+      - name: Log when under threshold
+        if: steps.lead.outputs.lead < 8
+        run: |
+          echo "dev 领先 ${{ steps.lead.outputs.lead }} 提交，未达阈值 8，跳过批 PR。"
+          echo "（现有批 PR: ${{ steps.lead.outputs.existing || '无' }}）"

@@ -50,6 +50,10 @@ _RESEARCH_LEVELS = {
     "licensed",
     "exchange_authoritative",
 }
+# Paper trading (L2, fake money) may run on research-grade raw evidence, so the
+# paper-execution gate accepts the same levels as research.  Only live
+# execution (L3) keeps the licensed/authoritative raw requirement.
+_PAPER_EXECUTION_LEVELS = _RESEARCH_LEVELS
 _EXECUTION_LEVELS = {"licensed", "exchange_authoritative"}
 _AUTHORITATIVE_ACTION_LEVELS = {"licensed", "exchange_authoritative"}
 _ACTION_TYPES = {
@@ -510,7 +514,7 @@ def _readiness_gaps(limitations: Iterable[str]) -> list[dict[str, str]]:
         "corporate_action_authoritative_evidence_missing": "complete licensed artifact governance for event and no-event coverage",
         "trading_status_authoritative_evidence_missing": "bind an authoritative daily trading-status artifact",
         "research_price_source_evidence_insufficient": "approve a research-adjusted source artifact without changing its declared trust level",
-        "raw_execution_source_evidence_insufficient": "approve a licensed raw execution source artifact",
+        "raw_execution_source_evidence_insufficient": "approve a research-grade raw execution source artifact (public_cross_validated or licensed)",
         "corporate_action_runtime_application_missing": "implement split/dividend portfolio-state application before execution use",
     }
     return [
@@ -3581,6 +3585,13 @@ class PriceLedgerStore:
             raw_levels
             and all(level in _EXECUTION_LEVELS for level in raw_levels)
         )
+        # Paper trading (simulation) relaxes the raw tier from licensed-only to
+        # research-grade; the licensed execution ledger remains the live (L3)
+        # requirement enforced by the strict-unbiased predicate below.
+        paper_execution_trusted = bool(
+            raw_levels
+            and all(level in _PAPER_EXECUTION_LEVELS for level in raw_levels)
+        )
         action_authoritative = bool(
             action_sources
             and all(
@@ -3613,7 +3624,7 @@ class PriceLedgerStore:
         limitations: list[str] = []
         if not research_trusted:
             limitations.append("research_price_source_evidence_insufficient")
-        if not execution_trusted:
+        if not paper_execution_trusted:
             limitations.append("raw_execution_source_evidence_insufficient")
         if not action_authoritative:
             limitations.append(
@@ -3668,7 +3679,7 @@ class PriceLedgerStore:
                 "raw_execution": {
                     "adjustment": "raw",
                     "available": True,
-                    "trusted": execution_trusted,
+                    "trusted": paper_execution_trusted,
                     "evidence_levels": raw_levels,
                 },
                 "research_adjusted": {
@@ -3686,7 +3697,12 @@ class PriceLedgerStore:
             "ready_for_return_research": research_trusted,
             "ready_for_unbiased_return_research": strict_unbiased,
             "ready_for_unbiased_research": strict_unbiased,
-            "ready_for_execution_simulation": False,
+            # Paper trading (L2) is ready when the exact runtime binding holds
+            # and the raw execution source is research-grade.  Live trading
+            # (L3) remains hard-locked: ready_for_real_tuning stays false until
+            # split/dividend position application and licensed execution
+            # evidence are separately certified.
+            "ready_for_execution_simulation": paper_execution_trusted,
             "ready_for_real_tuning": False,
             "limitations": limitations,
             "data_gaps": _readiness_gaps(limitations),
@@ -3700,6 +3716,12 @@ class PriceLedgerStore:
                     "exact PIT member-session binding, authoritative daily "
                     "tradability, validated corporate actions and trusted "
                     "raw/hfq ledgers"
+                ),
+                "ready_for_execution_simulation": (
+                    "paper trading (fake money) data gate: raw execution source "
+                    "must be research-grade (public_cross_validated or higher); "
+                    "licensed/exchange-authoritative raw remains the live (L3) "
+                    "requirement and ready_for_real_tuning stays false"
                 ),
             },
         }
@@ -3927,9 +3949,12 @@ class PriceLedgerStore:
             research_levels
             and all(level in _RESEARCH_LEVELS for level in research_levels)
         )
-        execution_trusted = bool(
+        # Paper trading (simulation) relaxes the raw tier from licensed-only to
+        # research-grade; the licensed execution ledger remains the live (L3)
+        # requirement (see strict_unbiased_readiness and ready_for_real_tuning).
+        paper_execution_trusted = bool(
             raw_levels
-            and all(level in _EXECUTION_LEVELS for level in raw_levels)
+            and all(level in _PAPER_EXECUTION_LEVELS for level in raw_levels)
         )
         action_authoritative = bool(
             batches
@@ -3957,7 +3982,7 @@ class PriceLedgerStore:
             limitations.append("cross_scope_canonical_price_conflict")
         if not research_trusted:
             limitations.append("research_price_source_evidence_insufficient")
-        if not execution_trusted:
+        if not paper_execution_trusted:
             limitations.append("raw_execution_source_evidence_insufficient")
         if not action_authoritative:
             limitations.append(
@@ -3972,8 +3997,9 @@ class PriceLedgerStore:
         # A range query has no authoritative trading-calendar/member-session
         # identity.  It may describe stored prices, but it can never certify
         # execution or real tuning; only the exact runtime-binding path can
-        # prove each required member-session (and that path remains blocked
-        # until corporate actions are applied to portfolio state).
+        # prove each required member-session.  The paper (L2) tier is therefore
+        # surfaced on the bound path only; real tuning (L3) additionally stays
+        # blocked until corporate actions are applied to portfolio state.
         ready_for_execution = False
         limitations.append("generic_readiness_not_execution_certification")
         return {
@@ -4000,7 +4026,7 @@ class PriceLedgerStore:
                 "raw_execution": {
                     "adjustment": "raw",
                     "available": dual_complete,
-                    "trusted": execution_trusted,
+                    "trusted": paper_execution_trusted,
                     "evidence_levels": raw_levels,
                 },
                 "research_adjusted": {
