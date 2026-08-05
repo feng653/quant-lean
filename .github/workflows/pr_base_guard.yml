@@ -1,9 +1,11 @@
 name: PR base guard
 
-# 硬控制：防止 agent/人工把普通任务 PR 直接开到 master。
-# 触发：任何 PR 创建/重开/retarget。base=master 且 head 不是发布来源
-# （test/integration）→ 自动关闭 + 重开 base=dev + 留言说明（保留原 PR 描述）。
-# master 只收来自 test/integration 的发布 PR（release_source_check + 本 guard 双保险）。
+# 硬控制：防止 agent/人工把任务 PR 开到错误的目标分支。
+# 规则（汇聚方向唯一）：
+#   任务 PR → dev（开发汇聚层）→ 批 PR（head=dev）→ test/integration → 发布 PR → master
+# 1) base=master 且 head 不是 test/integration → 自动纠正为 dev
+# 2) base=test/integration 且 head 不是 dev → 自动纠正为 dev（test 只接受 dev 批 PR）
+# 保留原 PR 标题/描述，关闭后重开 + 留言说明。
 # 注意：本 guard 是兜底防线；agent 的正确行为已由 opencode.yml prompt 强制
 # `--base dev`（该 prompt 必须随默认分支 master 发布后才会对 issue 触发生效）。
 
@@ -18,7 +20,7 @@ permissions:
 
 jobs:
   guard:
-    name: Guard PR base (master -> dev)
+    name: Guard PR base (master/test -> dev)
     runs-on: ubuntu-latest
     steps:
       - name: Check and fix PR base
@@ -29,23 +31,28 @@ jobs:
           base="${{ github.event.pull_request.base.ref }}"
           head="${{ github.event.pull_request.head.ref }}"
           echo "PR #$pr: base=$base head=$head"
-          # 非 master 目标 PR：正常（任务 PR 应 base dev，已由 prompt 保证）
-          if [[ "$base" != "master" ]]; then
-            echo "✅ base=$base 非 master，正常"
+          # 合法目标：dev 汇聚层直接放行
+          if [[ "$base" == "dev" ]]; then
+            echo "✅ base=dev，任务 PR 汇聚层，正常"
             exit 0
           fi
           # 发布 PR（head=test/integration → master）放行
-          if [[ "$head" == "test/integration" ]]; then
+          if [[ "$base" == "master" && "$head" == "test/integration" ]]; then
             echo "✅ 发布 PR（test/integration → master），放行"
             exit 0
           fi
-          # 其余 base=master 的任务 PR → 自动纠正为 dev（保留原描述/标题）
-          echo "❌ 任务 PR 直接 base master，自动纠正为 dev"
+          # 批 PR（head=dev → test/integration）放行：test 只接受 dev 汇聚的批 PR
+          if [[ "$base" == "test/integration" && "$head" == "dev" ]]; then
+            echo "✅ 批 PR（dev → test/integration），放行"
+            exit 0
+          fi
+          # 其余：base=master 或 base=test/integration 的任务 PR → 自动纠正为 dev
+          echo "❌ 任务 PR 直接 base $base，自动纠正为 dev"
           old_title="$(gh pr view "$pr" --json title -q .title 2>/dev/null || echo "任务 PR")"
           old_body="$(gh pr view "$pr" --json body -q .body 2>/dev/null || true)"
-          gh pr comment "$pr" --body "⛔ **PR base 守卫**：任务 PR 不应直接 base \`master\`（master 只收来自 test/integration 的发布 PR）。已自动关闭并重开为 base \`dev\`（开发汇聚层）。" 2>/dev/null || true
+          gh pr comment "$pr" --body "⛔ **PR base 守卫**：任务 PR 只能 base \`dev\`（汇聚方向：dev → test/integration → master）。已自动关闭并重开为 base \`dev\`。" 2>/dev/null || true
           gh pr close "$pr" --comment "自动关闭：base 应为 dev。" 2>/dev/null || true
-          new_pr="$(gh pr create --base dev --head "$head" --title "$old_title (rebase to dev)" --body "由 PR base 守卫自动重开：原 PR #$pr base 错误（master）。\n\n---\n原 PR 描述：\n$old_body" 2>&1 | tail -1)"
+          new_pr="$(gh pr create --base dev --head "$head" --title "$old_title (rebase to dev)" --body "由 PR base 守卫自动重开：原 PR #$pr base 错误（$base）。\n\n---\n原 PR 描述：\n$old_body" 2>&1 | tail -1)"
           echo "重开 PR: $new_pr"
           if [[ "$new_pr" =~ github.com/ ]]; then
             gh pr comment "$pr" --body "已重开为 dev 目标 PR：$new_pr" 2>/dev/null || true
