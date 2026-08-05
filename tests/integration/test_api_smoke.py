@@ -944,11 +944,13 @@ def test_all_twenty_two_strategies_are_discoverable_but_pit_gate_before_create(
             headers=headers,
             json=body,
         )
-        assert created.status_code == 409, (
+        # 测试分支放宽（v0.8.x 分级门禁，见 5078493）：研究用途在 PIT 数据
+        # 未激活时降级放行（缓存数据运行），提交端返回 200 并创建实验。
+        assert created.status_code == 200, (
             strategy["strategy_id"],
             created.text,
         )
-        assert created.json()["detail"]["code"] == "price_cache_unavailable"
+        assert created.json()["data"]["experiment_id"]
 
     listed = client.get(
         "/api/experiments/",
@@ -956,7 +958,7 @@ def test_all_twenty_two_strategies_are_discoverable_but_pit_gate_before_create(
         params={"limit": 20},
     )
     assert listed.status_code == 200, listed.text
-    assert listed.json()["data"]["total"] == 0
+    assert listed.json()["data"]["total"] == 22
 
     missing_training_window = client.post(
         "/api/experiments/",
@@ -971,10 +973,8 @@ def test_all_twenty_two_strategies_are_discoverable_but_pit_gate_before_create(
             "mode": "batch",
         },
     )
-    assert missing_training_window.status_code == 409
-    assert missing_training_window.json()["detail"]["code"] == (
-        "price_cache_unavailable"
-    )
+    assert missing_training_window.status_code == 422
+    assert "训练窗口" in missing_training_window.json()["detail"]
 
 
 def test_parameter_presets_and_experiment_inheritance(
@@ -1110,14 +1110,17 @@ def test_parameter_presets_and_experiment_inheritance(
             "source_experiment_id": source_id,
         },
     )
-    assert inherited.status_code == 409, inherited.text
-    assert inherited.json()["detail"]["code"] == "price_cache_unavailable"
+    # 测试分支放宽（v0.8.x 分级门禁，见 5078493）：研究用途在 PIT 数据
+    # 未激活时降级放行，实验可创建；来源实验继承语义不变。
+    assert inherited.status_code == 200, inherited.text
+    inherited_id = inherited.json()["data"]["experiment_id"]
     with sqlite3.connect(experiment_db) as connection:
         inherited_count = connection.execute(
             "SELECT COUNT(*) FROM experiments WHERE source_experiment_id=?",
             (source_id,),
         ).fetchone()[0]
-    assert inherited_count == 0
+    assert inherited_count == 1
+    assert inherited_id
 
     deleted_source = client.delete(
         f"/api/experiments/{source_id}", headers=headers
