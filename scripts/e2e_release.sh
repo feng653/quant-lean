@@ -382,24 +382,31 @@ deployment_id=0
 deployment_status="not_attempted"
 if (( run_count >= 1 )) && [[ "$experiment_result" == passed:* ]]; then
   source_id="${created_experiments[0]}"
-  deploy_resp="$(curl --silent --fail -X POST "$base_url/api/trading/deployments" \
+  # 部署 API 失败不中断（--fail 非 2xx 会静默退出）：捕获响应便于诊断
+  deploy_resp="$(curl --silent --max-time 60 -X POST "$base_url/api/trading/deployments" \
     -H "$auth_header" -H 'Content-Type: application/json' \
-    -d "{\"strategy_id\":\"ma_cross_v1\",\"display_name\":\"e2e-release-paper\",\"mode\":\"batch\",\"status\":\"active\",\"source_experiment_id\":$source_id}")"
-  deployment_id="$(printf '%s' "$deploy_resp" | "$python_bin" -c "import sys,json;print(json.load(sys.stdin)['data']['deployment_id'])")"
-  log "模拟盘部署 #$deployment_id 已创建"
+    -d "{\"strategy_id\":\"ma_cross_v1\",\"display_name\":\"e2e-release-paper\",\"mode\":\"batch\",\"status\":\"active\",\"source_experiment_id\":$source_id}" 2>&1 || true)"
+  deployment_id="$(printf '%s' "$deploy_resp" | "$python_bin" -c "import sys,json;print(json.load(sys.stdin)['data']['deployment_id'])" 2>/dev/null || echo 0)"
+  if [[ "$deployment_id" == "0" ]]; then
+    deployment_result="failed:deploy_api"
+    blocked_reasons="${blocked_reasons}deployment_api_error;"
+    log "⚠️ 模拟盘部署失败：$(printf '%s' "$deploy_resp" | head -c 200)"
+  else
+    log "模拟盘部署 #$deployment_id 已创建"
 
-  listed="$(curl --silent --fail "$base_url/api/trading/deployments" -H "$auth_header")"
-  deployment_status="$(printf '%s' "$listed" | "$python_bin" -c "
+    listed="$(curl --silent --max-time 60 --fail "$base_url/api/trading/deployments" -H "$auth_header" || true)"
+    deployment_status="$(printf '%s' "$listed" | "$python_bin" -c "
 import sys,json
 items=json.load(sys.stdin)['data']
-print(next(i['status'] for i in items if i['id']==$deployment_id))")"
-  if [[ "$deployment_status" == "active" ]]; then
-    deployment_result="passed:active"
-    log "✅ 模拟盘初始化确认：状态 active"
-  else
-    deployment_result="failed:deployment_status=${deployment_status}"
-    blocked_reasons="${blocked_reasons}deployment_not_active;"
-    log "⚠️ 模拟盘部署状态异常: $deployment_status"
+print(next(i['status'] for i in items if i['id']==$deployment_id))" 2>/dev/null || echo unknown)"
+    if [[ "$deployment_status" == "active" ]]; then
+      deployment_result="passed:active"
+      log "✅ 模拟盘初始化确认：状态 active"
+    else
+      deployment_result="failed:deployment_status=${deployment_status}"
+      blocked_reasons="${blocked_reasons}deployment_not_active;"
+      log "⚠️ 模拟盘部署状态异常: $deployment_status"
+    fi
   fi
 else
   deployment_result="skipped:no_completed_experiment"
