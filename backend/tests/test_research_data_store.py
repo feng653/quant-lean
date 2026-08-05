@@ -346,6 +346,101 @@ def test_tushare_index_candidates_materialize_into_research_only_generation(
     }
 
 
+def test_matching_tushare_report_uses_subset_and_count_not_equality(
+    tmp_path: Path,
+) -> None:
+    evidence = tmp_path / "evidence"
+    manifests = {
+        "000300.SH": "a" * 64,
+        "000905.SH": "b" * 64,
+        "000906.SH": "c" * 64,
+        "000852.SH": "d" * 64,
+    }
+    report = {
+        "schema_version": "tushare-pit-backfill/v1",
+        "run_id": "e" * 32,
+        "observed_at": "2026-08-01T00:00:00Z",
+        "index_month_coverage": [
+            {
+                "index_code": index_code,
+                "month": "2016-01",
+                "status": "complete_monthly_snapshot_candidate",
+                "row_count": 1,
+                "maximum_unique_members_on_one_date": 1,
+                "manifest_sha256": manifest,
+            }
+            for index_code, manifest in manifests.items()
+        ],
+        "checkpoint": {"sha256": "f" * 64},
+    }
+    raw = canonical_json_bytes(report)
+    digest = canonical_sha256(report)
+    report_path = evidence / "reports" / "sha256" / digest[:2] / f"{digest}.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_bytes(raw)
+
+    # A reconciled generation carries the four index manifests plus unrelated
+    # market session manifests, so exact-set equality can never hold.
+    source_manifests = {*manifests.values(), "g" * 64, "h" * 64}
+
+    assert (
+        ResearchDataStore._matching_tushare_report(  # noqa: SLF001
+            evidence,
+            source_manifests,
+            expected_complete_snapshot_count=4,
+            expected_run_id="e" * 32,
+            expected_checkpoint_sha256="f" * 64,
+        )
+        == digest
+    )
+
+    # The expected complete-snapshot count must agree.
+    assert (
+        ResearchDataStore._matching_tushare_report(  # noqa: SLF001
+            evidence,
+            source_manifests,
+            expected_complete_snapshot_count=3,
+            expected_run_id="e" * 32,
+            expected_checkpoint_sha256="f" * 64,
+        )
+        is None
+    )
+
+    # A generation missing one referenced snapshot does not match.
+    assert (
+        ResearchDataStore._matching_tushare_report(  # noqa: SLF001
+            evidence,
+            {*manifests.values(), "g" * 64} - {"a" * 64},
+            expected_complete_snapshot_count=4,
+            expected_run_id="e" * 32,
+            expected_checkpoint_sha256="f" * 64,
+        )
+        is None
+    )
+
+    # A report from another run/checkpoint is never auto-bound.
+    assert (
+        ResearchDataStore._matching_tushare_report(  # noqa: SLF001
+            evidence,
+            source_manifests,
+            expected_complete_snapshot_count=4,
+            expected_run_id="e" * 32,
+            expected_checkpoint_sha256="0" * 64,
+        )
+        is None
+    )
+    assert (
+        ResearchDataStore._matching_tushare_report(  # noqa: SLF001
+            evidence,
+            source_manifests,
+            expected_complete_snapshot_count=4,
+            expected_run_id="1" * 32,
+            expected_checkpoint_sha256="f" * 64,
+        )
+        is None
+    )
+
+
 def test_conflict_report_is_truthful_when_activated_source_is_unavailable(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -573,6 +668,12 @@ def test_reconciled_market_materialization_is_partial_streamed_and_unit_safe(
     )
     assert all_a_timeline.pool_id == "all_a"
     assert all_a_timeline.members_on("2016-01-01") == ("000001.SZ",)
+    # The ready report must surface the bound candidate report evidence from
+    # the active pointer (or generation metadata).
+    assert (
+        all_a["report"]["candidate_report_sha256"]
+        == report["stored_report_sha256"]
+    )
 
     assert store.query_pool("csi300", "2016-01-01")["available"] is False
     assert store.query_pool("csi300", "2016-01-31")["available"] is True
@@ -608,6 +709,27 @@ def test_reconciled_market_materialization_is_partial_streamed_and_unit_safe(
     assert second["generation_id"] == imported["generation_id"]
     assert generation_path.stat().st_mtime_ns == generation_mtime
     assert len(list((tmp_path / "research" / "generations").glob("*.sqlite"))) == 1
+
+    # Without an explicit digest, a fresh store must auto-backfill the
+    # matching sealed report so paper deployment evidence is not lost.
+    auto_store = ResearchDataStore(tmp_path / "auto-research")
+    auto_imported = auto_store.import_tushare_reconciled_history(
+        evidence,
+        run_id=plan.run_id,
+    )
+    assert (
+        auto_imported["candidate_report_sha256"]
+        == report["stored_report_sha256"]
+    )
+    auto_frame = auto_store.load_market_frame(
+        pool_id="all_a",
+        required_start="2016-01-01",
+        required_end="2016-01-01",
+    )["report"]
+    assert (
+        auto_frame["candidate_report_sha256"]
+        == report["stored_report_sha256"]
+    )
 
     active_before_cancel = store.active_pointer.read_bytes()
 
