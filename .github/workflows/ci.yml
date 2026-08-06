@@ -46,36 +46,37 @@ jobs:
           ref="${{ github.ref }}"
           full="false"
           skip="false"
-          # 汇聚层/发布层：全量
+          # 计算 changed（PR 事件：base.sha 三点 diff 覆盖多 commit；push 事件：HEAD~1..HEAD）
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
+          else
+            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
+          fi
+          # 汇聚层/发布层：全量（若为纯安全文件改动，下方白名单豁免会覆盖）
           if [[ "$base" == "test/integration" || "$base" == "master" || "$ref" == "refs/heads/test/integration" || "$ref" == "refs/heads/master" ]]; then
             full="true"
           fi
-          # 工作流/CI 配置改动：强制全量（工作流改坏会绕过门禁，不能走 fast 层）
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # 用 base.sha 做三点 diff（覆盖多 commit PR；无需 fetch origin/$base）
-            changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}"...HEAD 2>/dev/null || true)"
-            if echo "$changed" | grep -qE '^\.github/workflows/'; then
-              echo "检测到工作流配置改动，强制 full tier"
-              full="true"
-            fi
-            # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
-            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
-            if [[ -z "$non_ignored" ]]; then
-              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
-              skip="true"
-            fi
-          else
-            # push 事件：改动含 .github/workflows 也强制全量（auto_merge 合并产生的 commit 与 HEAD~1 对比）
-            changed="$(git diff --name-only HEAD~1 HEAD 2>/dev/null || true)"
-            if echo "$changed" | grep -qE '^\.github/workflows/'; then
-              echo "检测到工作流配置改动，强制 full tier"
-              full="true"
-            fi
-            non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
-            if [[ -z "$non_ignored" ]]; then
-              echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
-              skip="true"
-            fi
+          # 门禁/流水线工作流改动 → 强制 full（改坏会绕过门禁）。
+          # 安全白名单：opencode.yml（agent 执行环境，改坏只让 agent 任务失败，
+          # 不绕过任何测试门禁）。新 workflow 文件默认按门禁处理（full），
+          # 除非显式列入白名单。
+          unsafe_wf="$(echo "$changed" | grep -E '^\.github/workflows/' | grep -v '^\.github/workflows/opencode\.yml$' || true)"
+          if [[ -n "$unsafe_wf" ]]; then
+            echo "检测到门禁/流水线工作流改动，强制 full tier"
+            full="true"
+          fi
+          # 安全文件白名单豁免：改动仅含 opencode.yml（无其他任何文件）→ 不强制全量，
+          # 全链路（dev 层 / 批 PR / 发布 PR）均跳过耗时测试；master 合并仍保留人工确认。
+          safe_only="$(echo "$changed" | grep -vE '^\.github/workflows/opencode\.yml$' | grep -v '^$' || true)"
+          if [[ -n "$changed" && -z "$safe_only" ]]; then
+            echo "仅安全文件（opencode.yml）改动，豁免全量测试（fast 层即可）"
+            full="false"
+          fi
+          # 纯文档豁免：若改动全是豁免路径，跳过 CI 主体（docs/md/plist/tuning/agent md）
+          non_ignored="$(echo "$changed" | grep -vE '^(docs/|.*\.md$|deploy/macos/.*\.plist$|data/tuning/.*\.json$|\.opencode/agents/.*\.md$)' | grep -v '^$' || true)"
+          if [[ -z "$non_ignored" ]]; then
+            echo "改动仅含豁免路径（文档/配置），跳过 CI 主体"
+            skip="true"
           fi
           echo "full=$full" >> "$GITHUB_OUTPUT"
           echo "skip=$skip" >> "$GITHUB_OUTPUT"
@@ -100,6 +101,27 @@ jobs:
             exit 1
           fi
           echo "✅ head 为 test/integration，允许发布。"
+
+  test_source_check:
+    name: Test source check (dev only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: test/integration only accepts batch PRs from dev
+        shell: bash
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          if [[ "$BASE" != "test/integration" ]]; then
+            echo "非 test/integration 目标 PR，跳过来源检查（base: $BASE）。"
+            exit 0
+          fi
+          if [[ "$HEAD" != "dev" ]]; then
+            echo "❌ test/integration 只接受来自 dev 的批 PR（当前 head: $HEAD）。"
+            echo "流程：任务 PR 先合入 dev（fast 检查）→ dev 攒批 → 批 PR dev → test/integration（全量）。"
+            exit 1
+          fi
+          echo "✅ head 为 dev，允许汇聚。"
 
   fast_checks:
     name: Fast checks (ruff + smoke)
@@ -174,6 +196,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: L2 automatic health check (register → experiment → backtest → paper)
@@ -221,8 +244,14 @@ jobs:
             echo "非 PR 事件（push），跳过基线比对。"
             exit 0
           fi
-          git fetch origin "$BASE_REF" --depth=1
-          diff_files=$(git diff --name-only "origin/$BASE_REF...HEAD" -- backend/tests/snapshots/)
+          git fetch origin "$BASE_REF"
+          base_sha=$(git rev-parse "origin/$BASE_REF")
+          merge_base=$(git merge-base "$base_sha" HEAD || true)
+          if [[ -z "$merge_base" ]]; then
+            echo "⚠️ 与基线分支无共同祖先（历史异常），跳过比对。"
+            exit 0
+          fi
+          diff_files=$(git diff --name-only "$merge_base"...HEAD -- backend/tests/snapshots/)
           if [[ -z "$diff_files" ]]; then
             echo "✅ 快照与基线零改动。"
             exit 0
@@ -239,7 +268,7 @@ jobs:
   summary:
     name: Required checks
     runs-on: ubuntu-latest
-    needs: [release_source_check, fast_checks, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff, tier]
+    needs: [release_source_check, test_source_check, fast_checks, backend, health_check, frontend, contract_snapshot, snapshot_baseline_diff, tier]
     if: always()
     steps:
       - name: Verify required jobs
@@ -252,8 +281,8 @@ jobs:
             echo "纯文档/配置改动，CI 豁免（skip=true），通过。"
             exit 0
           fi
-          # fast 层：release_source_check + fast_checks + frontend + snapshot_baseline_diff 必绿
-          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.fast_checks.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
+          # fast 层：release_source_check + test_source_check + fast_checks + frontend + snapshot_baseline_diff 必绿
+          if [[ "${{ needs.release_source_check.result }}" != "success" || "${{ needs.test_source_check.result }}" != "success" || "${{ needs.fast_checks.result }}" != "success" || "${{ needs.frontend.result }}" != "success" || "${{ needs.snapshot_baseline_diff.result }}" != "success" ]]; then
             echo "One or more fast-tier required jobs failed."
             exit 1
           fi
@@ -280,6 +309,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Snapshot diff (if infra exists)
